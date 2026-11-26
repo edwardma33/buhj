@@ -43,6 +43,13 @@
       "when": 1795664601226,
       "tag": "0005_monthly_spending",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795668940431,
+      "tag": "0006_observed_pay",
+      "breakpoints": true
     }
   ]
 }

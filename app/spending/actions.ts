@@ -11,7 +11,7 @@ import {
   financialTransaction,
 } from "@/lib/db/schema"
 
-import { spendingCategory, spendingKind } from "./model"
+import { requiresDeposit, spendingCategory, spendingKind } from "./model"
 
 export async function correctTransaction(
   _previous: string,
@@ -51,7 +51,9 @@ export async function correctTransaction(
         eq(financialTransaction.importId, importId),
         eq(financialTransaction.sourceRow, sourceRow),
         inArray(financialTransaction.importId, confirmedImports),
-        kind === "refund" ? gt(financialTransaction.amountCents, 0) : undefined
+        requiresDeposit(kind)
+          ? gt(financialTransaction.amountCents, 0)
+          : undefined
       )
     )
     .returning({ sourceRow: financialTransaction.sourceRow })
@@ -59,5 +61,6 @@ export async function correctTransaction(
   if (!updated) return "This transaction could not be updated."
 
   revalidatePath("/spending")
+  revalidatePath("/income")
   return ""
 }

@@ -30,17 +30,32 @@ export function monthRange(value: unknown) {
   return { month, start, end }
 }
 
+export const spendingKindValues = [
+  "activity",
+  "regular_pay",
+  "bonus",
+  "reimbursement",
+  "refund",
+  "transfer",
+] as const
+
+export type SpendingKind = (typeof spendingKindValues)[number]
+
 export const spendingKinds = {
   activity: "Activity",
+  regular_pay: "Regular pay",
+  bonus: "Bonus",
+  reimbursement: "Reimbursement",
   refund: "Refund",
   transfer: "Internal transfer",
-} as const
-
-export type SpendingKind = keyof typeof spendingKinds
+} satisfies Record<SpendingKind, string>
 
 export function spendingKind(value: unknown): SpendingKind | undefined {
-  if (value === "activity" || value === "refund" || value === "transfer")
-    return value
+  return spendingKindValues.find((kind) => kind === value)
+}
+
+export function requiresDeposit(kind: SpendingKind) {
+  return kind !== "activity" && kind !== "transfer"
 }
 
 type SpendingEntry = {

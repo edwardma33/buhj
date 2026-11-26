@@ -304,6 +304,124 @@ try {
   console.log(
     "Monthly spending fixture, corrections, drilldown, and two-user isolation passed."
   )
+
+  await addImport(checking, [
+    {
+      postedDate: "2026-10-08",
+      description: "Second paycheck",
+      amountCents: 155_000,
+    },
+    {
+      postedDate: "2026-10-15",
+      description: "Third paycheck",
+      amountCents: 160_000,
+    },
+    {
+      postedDate: "2026-10-15",
+      description: "Year-end bonus",
+      amountCents: 250_000,
+    },
+    {
+      postedDate: "2026-10-15",
+      description: "Expense reimbursement",
+      amountCents: 42_000,
+    },
+  ])
+  await addImport(
+    checking,
+    [
+      {
+        postedDate: "2026-10-22",
+        description: "Pay in preview",
+        amountCents: 158_000,
+        spendingKind: "regular_pay",
+      },
+    ],
+    false
+  )
+
+  await owner.page.goto("/income")
+  const reported = owner.page.locator('[aria-label="Reported pay"]')
+  const observed = owner.page.locator('[aria-label="Observed pay"]')
+  await observed.getByText("0 confirmed deposits", { exact: true }).waitFor()
+  await owner.page.getByLabel("Job title").fill("Test engineer")
+  await owner.page.getByLabel("Gross annual earnings (USD)").fill("90000")
+  await owner.page.getByLabel("Take-home pay per paycheck (USD)").fill("1450")
+  await owner.page.getByLabel("Pay schedule").selectOption("biweekly")
+  await owner.page.getByRole("button", { name: "Save income profile" }).click()
+  await reported.getByText("$1,450.00 per paycheck", { exact: true }).waitFor()
+  await reported.getByText("Every two weeks", { exact: true }).waitFor()
+
+  await owner.page.goto(spending)
+  await correct("Paycheck", "Uncategorized", "regular_pay")
+  await owner.page
+    .getByRole("link", { name: "Compare reported and observed pay" })
+    .click()
+  await observed.getByText("1 confirmed deposit", { exact: true }).waitFor()
+  await observed
+    .getByText("Confirm regular pay on at least three different dates", {
+      exact: false,
+    })
+    .waitFor()
+  await row(owner.page, "2026-10-01")
+    .getByText("$1,500.13", { exact: true })
+    .waitFor()
+
+  await owner.page.goto(spending)
+  await correct("Second paycheck", "Uncategorized", "regular_pay")
+  await correct("Third paycheck", "Uncategorized", "regular_pay")
+  await correct("Year-end bonus", "Uncategorized", "bonus")
+  await correct("Expense reimbursement", "Uncategorized", "reimbursement")
+  await correct("Card payment credit", "Uncategorized", "transfer")
+  await totals(owner.page, "$7,580.32", "$62.20", "$7,518.12")
+  await owner.page
+    .getByRole("link", { name: "Compare reported and observed pay" })
+    .click()
+  await observed.getByText("3 confirmed deposits", { exact: true }).waitFor()
+  await observed.getByText("Weekly", { exact: true }).waitFor()
+  await observed
+    .getByText("$1,550.04 per paycheck on average", { exact: true })
+    .waitFor()
+  await reported.getByText("$1,450.00 per paycheck", { exact: true }).waitFor()
+  for (const [date, amount] of [
+    ["2026-10-01", "$1,500.13"],
+    ["2026-10-08", "$1,550.00"],
+    ["2026-10-15", "$1,600.00"],
+  ]) {
+    await row(owner.page, date).getByText(amount, { exact: true }).waitFor()
+  }
+
+  await guest.page.goto("/income")
+  const guestObserved = guest.page.locator('[aria-label="Observed pay"]')
+  await guestObserved
+    .getByText("0 confirmed deposits", { exact: true })
+    .waitFor()
+  await addImport(
+    guestAccount,
+    ["2026-10-04", "2026-10-18", "2026-11-01"].map((postedDate) => ({
+      postedDate,
+      amountCents: 120_000,
+      description: "Guest paycheck",
+      spendingKind: "regular_pay",
+    }))
+  )
+  await guest.page.reload()
+  await guestObserved
+    .getByText("3 confirmed deposits", { exact: true })
+    .waitFor()
+  await guestObserved
+    .getByText("These deposit dates do not establish a single pay schedule.")
+    .waitFor()
+  await row(guest.page, "2026-11-01")
+    .getByText("$1,200.00", { exact: true })
+    .waitFor()
+  assert.equal(await row(guest.page, "2026-10-01").count(), 0)
+  await owner.page.reload()
+  await observed.getByText("3 confirmed deposits", { exact: true }).waitFor()
+  await observed.getByText("Weekly", { exact: true }).waitFor()
+  console.log(
+    "Observed pay classifications, dates, amounts, sparse and ambiguous cadence, and owner isolation passed."
+  )
 } finally {
   await browser.close()
   server.kill()
