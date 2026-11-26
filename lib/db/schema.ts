@@ -1,5 +1,16 @@
-import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { relations, sql } from "drizzle-orm";
+import {
+  bigint,
+  boolean,
+  check,
+  index,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
+
+import { payScheduleValues } from "../income";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -75,6 +86,37 @@ export const signupInvite = pgTable("signup_invite", {
   id: text("token_hash").primaryKey(),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
+
+export const paySchedule = pgEnum("pay_schedule", payScheduleValues);
+
+export const incomeProfile = pgTable(
+  "income_profile",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    jobTitle: text("job_title").notNull(),
+    grossAnnualCents: bigint("gross_annual_cents", { mode: "number" }).notNull(),
+    takeHomePerPaycheckCents: bigint("take_home_per_paycheck_cents", {
+      mode: "number",
+    }).notNull(),
+    paySchedule: paySchedule("pay_schedule").notNull(),
+  },
+  (table) => [
+    check(
+      "income_profile_job_title_length",
+      sql`char_length(btrim(${table.jobTitle})) between 1 and 120`,
+    ),
+    check(
+      "income_profile_gross_annual_range",
+      sql`${table.grossAnnualCents} between 1 and 99999999999999`,
+    ),
+    check(
+      "income_profile_take_home_range",
+      sql`${table.takeHomePerPaycheckCents} between 1 and 99999999999999`,
+    ),
+  ],
+);
 
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
