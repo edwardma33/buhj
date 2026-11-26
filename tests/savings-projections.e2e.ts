@@ -446,13 +446,29 @@ try {
     "Row date extrema cannot prove import coverage"
   )
 
+  const spending = dashboard.getByRole("region", { name: "Monthly spending" })
+  assert.equal(
+    await spending
+      .getByRole("link", { name: "View spending" })
+      .getAttribute("href"),
+    "/spending?month=2026-10"
+  )
+  await spending.getByText("Monthly amounts", { exact: true }).click()
+  await spending
+    .getByText("No confirmed transactions", { exact: true })
+    .first()
+    .waitFor()
+  await spending.getByText("Monthly amounts", { exact: true }).click()
+
   async function setUpMonth(
     page: Page,
     month: string,
     dates: string,
     full: boolean
   ) {
-    const disclosure = page.getByText("Set up a completed-month pay comparison")
+    const disclosure = page.getByText("Compare a completed month", {
+      exact: true,
+    })
     if (!(await page.getByLabel("Completed month").isVisible()))
       await disclosure.click()
     await page.getByLabel("Completed month").fill(month)
@@ -486,9 +502,9 @@ try {
   )
 
   await setUpMonth(dashboard, october, "2026-10-30", true)
-  await dashboard.getByText("Pay difference for 2026-10").waitFor()
-  await dashboard.getByText("$3,000.00", { exact: true }).waitFor()
-  await dashboard.getByText("$2,901.23", { exact: true }).waitFor()
+  const octoberReview = dashboard.getByRole("article", { name: "October 2026" })
+  await octoberReview.getByText("$3,000.00", { exact: true }).waitFor()
+  await octoberReview.getByText("$2,901.23", { exact: true }).waitFor()
   await guest.page.goto("/")
   assert.equal(
     await guest.page.getByRole("link", { name: "Review forecast" }).count(),
@@ -501,6 +517,10 @@ try {
   )
 
   await keep.click()
+  await dashboard
+    .getByRole("status")
+    .filter({ hasText: "Forecast kept for October 2026." })
+    .waitFor()
   await review.waitFor({ state: "hidden" })
   await dashboard.reload()
   assert.equal(
@@ -512,7 +532,7 @@ try {
     { ...deposit, postedDate: "2026-10-31", amountCents: 1_234 },
   ])
   await dashboard.reload()
-  await dashboard.getByText("$2,913.57", { exact: true }).waitFor()
+  await octoberReview.getByText("$2,913.57", { exact: true }).waitFor()
 
   await review.click()
   await dashboard.getByText("Pay review for 2026-10").waitFor()
@@ -579,8 +599,11 @@ try {
     { ...groceries, postedDate: "2026-08-03" },
   ])
   await threePaycheckUser.page.reload()
-  await threePaycheckUser.page.getByText("$2,400.00", { exact: true }).waitFor()
-  await threePaycheckUser.page.getByText("$2,250.00", { exact: true }).waitFor()
+  const augustReview = threePaycheckUser.page.getByRole("article", {
+    name: "August 2026",
+  })
+  await augustReview.getByText("$2,400.00", { exact: true }).waitFor()
+  await augustReview.getByText("$2,250.00", { exact: true }).waitFor()
   await threePaycheckUser.page
     .getByRole("link", { name: "Review forecast" })
     .click()
