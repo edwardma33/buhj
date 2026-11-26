@@ -7,7 +7,13 @@ import { Label } from "@/components/ui/label"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 
 import { correctTransaction } from "./actions"
-import { categories, spendingKinds, type SpendingKind } from "./model"
+import {
+  categories,
+  requiresDeposit,
+  spendingKinds,
+  spendingKindValues,
+  type SpendingKind,
+} from "./model"
 
 export function CorrectionForm({
   importId,
@@ -44,13 +50,13 @@ export function CorrectionForm({
       <div className="grid gap-1.5">
         <Label htmlFor={id + "-kind"}>Type</Label>
         <NativeSelect id={id + "-kind"} name="kind" defaultValue={kind}>
-          {Object.entries(spendingKinds).map(([value, label]) => (
+          {spendingKindValues.map((value) => (
             <NativeSelectOption
               key={value}
               value={value}
-              disabled={value === "refund" && !credit}
+              disabled={requiresDeposit(value) && !credit}
             >
-              {label}
+              {spendingKinds[value]}
             </NativeSelectOption>
           ))}
         </NativeSelect>

@@ -1,5 +1,6 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
@@ -73,5 +74,6 @@ export async function saveIncome(
     return { saveFailed: true }
   }
 
+  revalidatePath("/income")
   return { saved: true }
 }

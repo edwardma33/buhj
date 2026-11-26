@@ -67,6 +67,9 @@ export default async function SpendingPage({
         Home
       </Link>
       <h1 className="text-3xl font-semibold">Monthly spending</h1>
+      <Link href="/income" className="text-sm underline underline-offset-4">
+        Compare reported and observed pay
+      </Link>
 
       <form className="flex flex-wrap items-end gap-3">
         <div className="grid gap-1.5">
