@@ -4,6 +4,7 @@ import {
   boolean,
   check,
   date,
+  foreignKey,
   integer,
   jsonb,
   primaryKey,
@@ -247,4 +248,32 @@ export const savedResult = pgTable(
       .where(sql`${table.savedAt} is null`),
     check("saved_result_snapshot_kind", sql`${table.snapshot}->>'kind' is not distinct from ${table.kind}`),
   ],
+);
+
+export const payReviewMonth = pgTable(
+  "pay_review_month",
+  {
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    monthStart: date("month_start").notNull(),
+    schedule: paySchedule("schedule").notNull(),
+    expectedDates: date("expected_dates").array().notNull(),
+    fullCoverage: boolean("full_coverage").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.monthStart] })]
+);
+
+export const payReviewDismissal = pgTable(
+  "pay_review_dismissal",
+  {
+    userId: text("user_id").notNull(),
+    monthStart: date("month_start").notNull(),
+    evidence: text("evidence").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.monthStart, table.evidence] }),
+    foreignKey({
+      columns: [table.userId, table.monthStart],
+      foreignColumns: [payReviewMonth.userId, payReviewMonth.monthStart],
+    }).onDelete("cascade"),
+  ]
 );

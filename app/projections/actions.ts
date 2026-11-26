@@ -11,10 +11,13 @@ import { categories, monthRange } from "@/app/spending/model"
 import { listConfirmedSpending } from "@/app/spending/records"
 import { reserveAiRequest } from "@/lib/ai/quota"
 import { summarizeInsight } from "@/lib/insights/model"
+import { payScheduleValues } from "@/lib/income"
+import { listPayDifferences } from "@/lib/pay-review/records"
 import {
   calculateProjection,
   daysBetween,
   projectionEvidence,
+  type PayBaseline,
   type ProjectionSnapshot,
   type Scenario,
 } from "@/lib/projections/model"
@@ -36,7 +39,11 @@ export async function generateProjection(_previous: string, form: FormData) {
   if (month !== requestedMonth) return "Choose a valid month."
 
   const baselineKind = form.get("baseline")
-  if (baselineKind !== "reported" && baselineKind !== "observed")
+  if (
+    baselineKind !== "reported" &&
+    baselineKind !== "observed" &&
+    baselineKind !== "revised"
+  )
     return "Choose a Pay baseline."
   const asOf = new Date().toISOString().slice(0, 10)
   const kind = form.get("scenario")
@@ -76,15 +83,36 @@ export async function generateProjection(_previous: string, form: FormData) {
     return "Choose a scenario."
   }
 
-  const [baseline, accounts] = await Promise.all([
-    getProjectionPay(userId, baselineKind),
-    listFinancialAccounts(),
-  ])
-  if (!baseline)
-    return baselineKind === "reported"
-      ? "Add your Reported pay in Income to use this baseline."
-      : "Confirm enough regular deposits to establish an Observed pay schedule."
+  const reviewMonth = form.get("reviewMonth")
+  let baseline: PayBaseline | null
+  if (baselineKind === "revised") {
+    if (typeof reviewMonth !== "string")
+      return "Open Review forecast from the dashboard to use revised pay."
+    const [review] = await listPayDifferences(userId, reviewMonth)
+    if (!review || review.evidence !== form.get("reviewEvidence"))
+      return "Pay evidence changed. Open Review forecast again from the dashboard."
 
+    const paycheckCents = readCents(form.get("revisedPay"))
+    const schedule = payScheduleValues.find(
+      (value) => value === form.get("revisedSchedule")
+    )
+    if (!schedule || paycheckCents === null || paycheckCents <= BigInt(0))
+      return "Enter positive take-home pay and choose a Pay schedule."
+    baseline = {
+      kind: "revised",
+      schedule,
+      paycheckCents: paycheckCents.toString(),
+      reviewMonth,
+    }
+  } else {
+    baseline = await getProjectionPay(userId, baselineKind)
+    if (!baseline)
+      return baselineKind === "reported"
+        ? "Add your Reported pay in Income to use this baseline."
+        : "Confirm enough regular deposits to establish an Observed pay schedule."
+  }
+
+  const accounts = await listFinancialAccounts()
   const entries = await listConfirmedSpending(
     accounts.map(({ id }) => id),
     start,

@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 
+import { payScheduleLabels } from "@/lib/income"
+
 import { generateProjection, saveProjection } from "./actions"
 
 function Field({
@@ -34,12 +36,20 @@ function Field({
 export function ProjectionForm({
   month,
   observedAvailable,
+  review,
 }: {
   month: string
   observedAvailable: boolean
+  review?: {
+    month: string
+    evidence: string
+    schedule: keyof typeof payScheduleLabels
+  }
 }) {
   const [scenario, setScenario] = useState("spending")
-  const [baseline, setBaseline] = useState("reported")
+  const [baseline, setBaseline] = useState(
+    review ? (observedAvailable ? "observed" : "revised") : "reported"
+  )
   const [category, setCategory] = useState("")
   const [error, action, pending] = useActionState(generateProjection, "")
 
@@ -49,6 +59,12 @@ export function ProjectionForm({
       onReset={(event) => event.preventDefault()}
       className="space-y-4"
     >
+      {review && (
+        <>
+          <input type="hidden" name="reviewMonth" value={review.month} />
+          <input type="hidden" name="reviewEvidence" value={review.evidence} />
+        </>
+      )}
       <Field
         label="Source month"
         name="month"
@@ -68,6 +84,9 @@ export function ProjectionForm({
           <NativeSelectOption value="observed" disabled={!observedAvailable}>
             Observed pay
           </NativeSelectOption>
+          {review && (
+            <NativeSelectOption value="revised">Revised pay</NativeSelectOption>
+          )}
         </NativeSelect>
         {!observedAvailable && (
           <p className="text-sm text-muted-foreground">
@@ -76,6 +95,30 @@ export function ProjectionForm({
           </p>
         )}
       </div>
+      {baseline === "revised" && review && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field
+            label="Take-home pay per paycheck (USD)"
+            name="revisedPay"
+            inputMode="decimal"
+            required
+          />
+          <div className="grid gap-1.5">
+            <Label htmlFor="revisedSchedule">Pay schedule</Label>
+            <NativeSelect
+              id="revisedSchedule"
+              name="revisedSchedule"
+              defaultValue={review.schedule}
+            >
+              {Object.entries(payScheduleLabels).map(([value, label]) => (
+                <NativeSelectOption key={value} value={value}>
+                  {label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </div>
+        </div>
+      )}
       <div className="grid gap-1.5">
         <Label htmlFor="scenario">Scenario</Label>
         <NativeSelect

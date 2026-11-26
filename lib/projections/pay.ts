@@ -8,10 +8,16 @@ import { getObservedPay } from "@/lib/observed-pay-records"
 
 import type { PayBaseline } from "./model"
 
+type StoredPay = Exclude<PayBaseline, { kind: "revised" }>
+
+export function getProjectionPay<K extends StoredPay["kind"]>(
+  userId: string,
+  kind: K
+): Promise<Extract<StoredPay, { kind: K }> | null>
 export async function getProjectionPay(
   userId: string,
-  kind: PayBaseline["kind"]
-): Promise<PayBaseline | null> {
+  kind: StoredPay["kind"]
+): Promise<StoredPay | null> {
   if (kind === "observed") {
     const { cadence, sampleSize } = await getObservedPay(userId)
     return cadence.status === "supported"

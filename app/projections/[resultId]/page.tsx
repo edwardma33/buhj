@@ -64,6 +64,9 @@ export default async function ProjectionPage({
                 {baseline.latestPayday}.
               </p>
             )}
+            {baseline.kind === "revised" && (
+              <p>Entered during the pay review for {baseline.reviewMonth}.</p>
+            )}
             <p>
               {spending.purchases} recorded{" "}
               {spending.purchases === 1 ? "purchase" : "purchases"}. Activity
