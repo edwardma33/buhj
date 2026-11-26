@@ -36,6 +36,13 @@
       "when": 1795663164928,
       "tag": "0004_csv_imports",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795664601226,
+      "tag": "0005_monthly_spending",
+      "breakpoints": true
     }
   ]
 }
