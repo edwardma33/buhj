@@ -19,8 +19,15 @@
     {
       "idx": 2,
       "version": "7",
-      "when": 1795662043212,
-      "tag": "0002_financial_accounts",
+      "when": 1795662052326,
+      "tag": "0002_income_profile",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795662610722,
+      "tag": "0003_financial_accounts",
       "breakpoints": true
     }
   ]
