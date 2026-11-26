@@ -3,7 +3,7 @@ import Link from "next/link"
 import { requireUserId } from "@/app/financial-accounts/accounts"
 import { monthRange } from "@/app/spending/model"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { listSavedInsights } from "@/lib/insights/records"
+import { listSavedResults } from "@/lib/saved-results"
 
 import { InsightForm } from "./insight-form"
 
@@ -19,7 +19,7 @@ export default async function InsightsPage({
   const userId = await requireUserId()
   const [query, saved] = await Promise.all([
     searchParams,
-    listSavedInsights(userId),
+    listSavedResults(userId, "insight"),
   ])
 
   const { month } = monthRange(query.month)

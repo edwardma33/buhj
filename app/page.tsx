@@ -36,6 +36,11 @@ export default async function Page() {
           Spending Insights
         </Link>
       </p>
+      <p>
+        <Link href="/projections" className="underline underline-offset-4">
+          Savings Projections
+        </Link>
+      </p>
       <SignOutButton />
     </main>
   )

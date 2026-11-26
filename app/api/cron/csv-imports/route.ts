@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto"
 
 import { deletePastAiUsage } from "@/lib/ai/quota"
 import { deleteExpiredPreviews } from "@/lib/csv-import/imports"
-import { deleteExpiredResultDrafts } from "@/lib/insights/records"
+import { deleteExpiredResultDrafts } from "@/lib/saved-results"
 
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET

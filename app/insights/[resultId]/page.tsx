@@ -4,7 +4,7 @@ import { notFound } from "next/navigation"
 import { requireUserId, validUuid } from "@/app/financial-accounts/accounts"
 import { formatUsd } from "@/app/spending/model"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getInsight } from "@/lib/insights/records"
+import { getResult } from "@/lib/saved-results"
 
 import { SaveInsightForm } from "../insight-form"
 
@@ -14,8 +14,8 @@ export default async function InsightPage({
   const userId = await requireUserId()
   const { resultId } = await params
   if (!validUuid(resultId)) notFound()
-  const result = await getInsight(userId, resultId)
-  if (!result) notFound()
+  const result = await getResult(userId, resultId, "insight")
+  if (result?.snapshot.kind !== "insight") notFound()
 
   const { sourcePeriod, inputs, values, assumptions, explanation } =
     result.snapshot

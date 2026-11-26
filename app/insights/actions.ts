@@ -17,7 +17,7 @@ import {
   supportsSuggestion,
 } from "@/lib/insights/model"
 import { explainSpending } from "@/lib/insights/provider"
-import { createInsightDraft, saveInsightDraft } from "@/lib/insights/records"
+import { createResultDraft, saveResultDraft } from "@/lib/saved-results"
 
 export async function generateInsight(_previous: string, formData: FormData) {
   const userId = await requireUserId()
@@ -49,7 +49,7 @@ export async function generateInsight(_previous: string, formData: FormData) {
     return "Buhj could not generate an Insight right now. Try again later."
   }
 
-  const id = await createInsightDraft(userId, {
+  const id = await createResultDraft(userId, {
     ...evidence,
     kind: "insight",
     version: 1,
@@ -63,6 +63,6 @@ export async function saveInsight(formData: FormData) {
   const userId = await requireUserId()
   const id = formData.get("id")
   if (typeof id !== "string" || !validUuid(id)) notFound()
-  if (!(await saveInsightDraft(userId, id))) notFound()
+  if (!(await saveResultDraft(userId, id, "insight"))) notFound()
   redirect("/insights/" + id)
 }
