@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
@@ -12,6 +13,11 @@ export default async function Page() {
     <main className="mx-auto max-w-3xl space-y-4 px-6 py-16">
       <h1 className="text-3xl font-semibold">Buhj</h1>
       <p>Signed in as {session.user.email}</p>
+      <p>
+        <Link href="/income" className="underline underline-offset-4">
+          Income profile
+        </Link>
+      </p>
       <SignOutButton />
     </main>
   )
