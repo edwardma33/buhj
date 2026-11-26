@@ -1,4 +1,4 @@
-import { formatUsd } from "@/app/spending/model"
+import { formatUsd } from "@/app/(workspace)/spending/model"
 import { payScheduleLabels } from "@/lib/income"
 
 type Schedule = keyof typeof payScheduleLabels

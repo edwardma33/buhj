@@ -15,7 +15,7 @@ export default async function FinancialAccountPage({
   const imports = await listCsvImports(account.id)
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 px-6 py-16">
+    <main className="workspace-page workspace-page-narrow space-y-6">
       <Link
         href="/financial-accounts"
         className="text-sm underline underline-offset-4"

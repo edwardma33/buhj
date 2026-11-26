@@ -6,9 +6,9 @@ import {
   listFinancialAccounts,
   requireUserId,
   validUuid,
-} from "@/app/financial-accounts/accounts"
-import { categories, monthRange } from "@/app/spending/model"
-import { listConfirmedSpending } from "@/app/spending/records"
+} from "@/app/(workspace)/financial-accounts/accounts"
+import { categories, monthRange } from "@/app/(workspace)/spending/model"
+import { listConfirmedSpending } from "@/app/(workspace)/spending/records"
 import { reserveAiRequest } from "@/lib/ai/quota"
 import { summarizeInsight } from "@/lib/insights/model"
 import { payScheduleValues } from "@/lib/income"

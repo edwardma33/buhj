@@ -65,7 +65,7 @@ export default async function ImportPage({
   }
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 px-6 py-16">
+    <main className="workspace-page workspace-page-narrow space-y-6">
       <Link href={accountPath} className="text-sm underline underline-offset-4">
         Back to {account.name}
       </Link>

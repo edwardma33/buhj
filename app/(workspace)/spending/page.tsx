@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import { listFinancialAccounts } from "@/app/financial-accounts/accounts"
+import { listFinancialAccounts } from "@/app/(workspace)/financial-accounts/accounts"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -62,7 +62,7 @@ export default async function SpendingPage({
   }
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 px-6 py-12">
+    <main className="workspace-page space-y-6">
       <Link href="/" className="text-sm underline underline-offset-4">
         Home
       </Link>

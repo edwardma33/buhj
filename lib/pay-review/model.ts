@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto"
 
-import { monthRange } from "@/app/spending/model"
+import { monthRange } from "@/app/(workspace)/spending/model"
 import type { ObservedDeposit } from "@/lib/observed-pay"
 import type { PayBaseline } from "@/lib/projections/model"
 

@@ -3,7 +3,7 @@
 import { useActionState, useState, type ComponentProps } from "react"
 import { useFormStatus } from "react-dom"
 
-import { categories } from "@/app/spending/model"
+import { categories } from "@/app/(workspace)/spending/model"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

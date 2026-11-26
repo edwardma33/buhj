@@ -2,14 +2,13 @@ import Link from "next/link"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
-import { formatUsd } from "@/app/spending/model"
+import { formatUsd } from "@/app/(workspace)/spending/model"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { listPayDifferences } from "@/lib/pay-review/records"
 import { auth } from "@/lib/auth/auth"
 import { keepForecast } from "./pay-review-actions"
 import { PayReviewForm } from "./pay-review-form"
-import { SignOutButton } from "./sign-out-button"
 
 export default async function Page() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -24,7 +23,7 @@ export default async function Page() {
     .slice(0, 7)
 
   return (
-    <main className="mx-auto max-w-3xl space-y-4 px-6 py-16">
+    <main className="workspace-page workspace-page-narrow space-y-4">
       <h1 className="text-3xl font-semibold">Buhj</h1>
       <p>Signed in as {session.user.email}</p>
       <p>
@@ -97,7 +96,6 @@ export default async function Page() {
         </summary>
         <PayReviewForm latestMonth={latestMonth} />
       </details>
-      <SignOutButton />
     </main>
   )
 }

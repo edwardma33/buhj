@@ -3,7 +3,7 @@
 import { and, eq, gt, inArray, isNotNull } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
-import { requireUserId, validUuid } from "@/app/financial-accounts/accounts"
+import { requireUserId, validUuid } from "@/app/(workspace)/financial-accounts/accounts"
 import { db } from "@/lib/db"
 import {
   csvImport,

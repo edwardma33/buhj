@@ -1,5 +1,6 @@
 "use client"
 
+import { LogOutIcon } from "lucide-react"
 import { useState } from "react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -28,13 +29,15 @@ export function SignOutButton() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
+        className="workspace-nav-control"
         disabled={pending}
         onClick={signOut}
       >
+        <LogOutIcon data-icon="inline-start" />
         {pending ? "Signing out…" : "Sign out"}
       </Button>
       {failed && (
