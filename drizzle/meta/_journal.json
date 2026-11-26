@@ -15,6 +15,13 @@
       "when": 1795660205680,
       "tag": "0001_signup_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795662043212,
+      "tag": "0002_financial_accounts",
+      "breakpoints": true
     }
   ]
 }
