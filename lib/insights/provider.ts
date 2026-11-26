@@ -3,7 +3,7 @@ import "server-only"
 import { generateText, jsonSchema, Output } from "ai"
 
 import { formatUsd } from "@/app/spending/model"
-import { openai } from "@/lib/ai"
+import { explanationModel, explanationProviderOptions, openai } from "@/lib/ai"
 
 import { type InsightSnapshot, supportsSuggestion } from "./model"
 
@@ -17,7 +17,7 @@ export async function explainSpending(
     purchaseDays: entry.purchaseDays,
   }))
   const { output } = await generateText({
-    model: openai.responses(process.env.OPENAI_INSIGHT_MODEL || "gpt-6-luna"),
+    model: openai.responses(explanationModel),
     system:
       "Use the supplied category aggregates to suggest one to three practical ways to review or reduce spending. Cite each suggestion by its category field. The app shows the exact numbers separately. Write one short advice sentence per category, using distinct categories. Do not include numbers, amounts, savings estimates, merchant names, or claims about individual purchases, recurring charges, or past or future months. Use conditional advice when the data does not show a specific action.",
     prompt: JSON.stringify(evidence),
@@ -47,9 +47,7 @@ export async function explainSpending(
         additionalProperties: false,
       }),
     }),
-    providerOptions: {
-      openai: { store: false, reasoningEffort: "none", strictJsonSchema: true },
-    },
+    providerOptions: explanationProviderOptions,
     maxOutputTokens: 420,
     maxRetries: 0,
     abortSignal: AbortSignal.timeout(15_000),

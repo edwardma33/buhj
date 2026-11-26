@@ -2,16 +2,15 @@ import "server-only"
 
 import { generateText, jsonSchema, Output } from "ai"
 
-import { openai } from "@/lib/ai"
+import { explanationModel, explanationProviderOptions, openai } from "@/lib/ai"
 
 import { projectionEvidence, type ProjectionSnapshot } from "./model"
 
 export async function explainProjection(
-  evidence: ReturnType<typeof projectionEvidence>,
-  model = process.env.OPENAI_INSIGHT_MODEL || "gpt-6-luna"
+  evidence: ReturnType<typeof projectionEvidence>
 ): Promise<ProjectionSnapshot["explanation"]> {
   const { output } = await generateText({
-    model: openai.responses(model),
+    model: openai.responses(explanationModel),
     system:
       "Explain this hypothetical savings projection in one to three short, actionable sentences. Each sentence must cite a distinct supplied evidence label in the evidence field. Keep advice grounded in that evidence. The app displays the exact figures. Do not repeat or invent numbers, infer specific transactions, or promise outcomes. Treat incomplete spending coverage as uncertainty. A negative surplus means a shortfall.",
     prompt: JSON.stringify(evidence),
@@ -39,13 +38,7 @@ export async function explainProjection(
         additionalProperties: false,
       }),
     }),
-    providerOptions: {
-      openai: {
-        store: false,
-        reasoningEffort: model === "gpt-6-luna" ? "none" : "low",
-        strictJsonSchema: true,
-      },
-    },
+    providerOptions: explanationProviderOptions,
     maxOutputTokens: 1024,
     maxRetries: 0,
     abortSignal: AbortSignal.timeout(25_000),
