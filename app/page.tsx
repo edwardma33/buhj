@@ -18,6 +18,14 @@ export default async function Page() {
           Income profile
         </Link>
       </p>
+      <p>
+        <Link
+          href="/financial-accounts"
+          className="underline underline-offset-4"
+        >
+          Financial accounts
+        </Link>
+      </p>
       <SignOutButton />
     </main>
   )

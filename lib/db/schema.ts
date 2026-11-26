@@ -8,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 import { payScheduleValues } from "../income";
@@ -136,3 +137,16 @@ export const accountRelations = relations(account, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+export const financialAccount = pgTable(
+  "financial_account",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    institution: text("institution").notNull(),
+  },
+  (table) => [index("financial_account_user_id_idx").on(table.userId)],
+);
