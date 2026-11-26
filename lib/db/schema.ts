@@ -202,13 +202,13 @@ export const financialTransaction = pgTable(
     amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
     category: text("category").default("Uncategorized").notNull(),
     sourceId: text("source_id"),
-    spendingKind: text("spending_kind", { enum: ["activity", "refund", "transfer"] }).default("activity").notNull(),
+    spendingKind: text("spending_kind", { enum: ["activity", "regular_pay", "bonus", "reimbursement", "refund", "transfer"] }).default("activity").notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.importId, table.sourceRow] }),
     check("financial_transaction_spending_kind", sql`
       ${table.spendingKind} in ('activity', 'transfer')
-      or (${table.spendingKind} = 'refund' and ${table.amountCents} > 0)
+      or (${table.spendingKind} in ('regular_pay', 'bonus', 'reimbursement', 'refund') and ${table.amountCents} > 0)
     `),
   ],
 );
