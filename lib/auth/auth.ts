@@ -6,5 +6,5 @@ import { authOptions } from "@/lib/auth/options"
 
 export const auth = betterAuth({
   ...authOptions,
-  database: drizzleAdapter(db, { provider: "pg", schema }),
+  database: drizzleAdapter(db, { provider: "pg", schema, transaction: true }),
 })
