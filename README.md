@@ -45,3 +45,22 @@ Run `bun run db:migrate`, then start the app with
 `bun run dev --hostname 127.0.0.1`. In a second terminal with the same database
 and app URLs, run `bun test tests/invite-auth.test.ts`. The suite creates test
 users and briefly adds a database constraint to simulate a failed signup write.
+
+## Verify USD CSV imports
+
+Create a fresh disposable Postgres database whose name ends in `_test`. Set
+`DATABASE_URL` to its connection string with `127.0.0.1` as the host. Install
+Chromium, apply the migrations, and run the workflow test.
+
+```bash
+bunx playwright install chromium
+bun run db:migrate
+bun run test:csv-import
+```
+
+The test starts Next.js on port 34152 and directs OpenAI requests to a local
+fixture with a synthetic key.
+
+For a Vercel deployment, set `CRON_SECRET` so the daily job can delete expired
+previews. `AI_DAILY_USER_LIMIT` and `AI_DAILY_APP_LIMIT` default to 10 and 100
+requests per UTC day. Set either limit to zero to disable dispatch at that scope.

@@ -29,9 +29,13 @@ export async function listFinancialAccounts() {
     .orderBy(asc(financialAccount.name), asc(financialAccount.id))
 }
 
+export function validUuid(id: string) {
+  return /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id)
+}
+
 export async function getFinancialAccount(accountId: string) {
   const userId = await requireUserId()
-  if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(accountId)) {
+  if (!validUuid(accountId)) {
     notFound()
   }
 
@@ -46,5 +50,5 @@ export async function getFinancialAccount(accountId: string) {
     )
 
   if (!account) notFound()
-  return account
+  return { ...account, userId }
 }
