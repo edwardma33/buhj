@@ -7,12 +7,13 @@ const MAX_COLUMNS = 40
 export type ColumnMapping = {
   date: number
   description: number
-  amount: number
   sourceId: number | null
-  sign: "positive-inflow" | "positive-outflow"
-}
+} & (
+  | { amount: number; sign: "positive-inflow" | "positive-outflow" }
+  | { debit: number; credit: number }
+)
 
-type TransactionData = {
+export type TransactionData = {
   postedDate: string
   description: string
   amountCents: number
@@ -22,6 +23,15 @@ type TransactionData = {
 export type PreviewRow =
   | { row: number; transaction: TransactionData }
   | { row: number; issues: string[] }
+  | { row: number; correction: TransactionCorrection }
+
+type TransactionCorrection = Pick<
+  TransactionData,
+  "sourceId" | "description"
+> & {
+  date: { value: string } | { original: string }
+  amount: { cents: number } | { original: string }
+}
 
 export type Csv = { headers: string[]; rows: string[][] }
 
@@ -95,11 +105,12 @@ export function validMapping(
   columnCount: number
 ): value is ColumnMapping {
   if (!value || typeof value !== "object") return false
-  const { date, description, amount, sourceId, sign } = value as Record<
-    string,
-    unknown
-  >
-  const indexes = [date, description, amount]
+  const { date, description, amount, sourceId, sign, debit, credit } =
+    value as Record<string, unknown>
+  const signed = amount !== undefined
+  if (signed && sign !== "positive-inflow" && sign !== "positive-outflow")
+    return false
+  const indexes = [date, description, ...(signed ? [amount] : [debit, credit])]
   if (sourceId !== null) indexes.push(sourceId)
   return (
     indexes.every(
@@ -108,9 +119,7 @@ export function validMapping(
         Number.isInteger(index) &&
         index >= 0 &&
         index < columnCount
-    ) &&
-    new Set(indexes).size === indexes.length &&
-    (sign === "positive-inflow" || sign === "positive-outflow")
+    ) && new Set(indexes).size === indexes.length
   )
 }
 
@@ -167,30 +176,103 @@ export function previewRows(
     if (cells.length !== headers.length) {
       return { row, issues: ["Column count differs from the header."] }
     }
-    const date = postedDate(cells[mapping.date])
-    const amount = signedCents(cells[mapping.amount])
     const description = cells[mapping.description]
     const sourceId =
       mapping.sourceId === null ? null : cells[mapping.sourceId] || null
     const issues = []
-    if (!date) issues.push("Invalid or ambiguous date. Use YYYY-MM-DD.")
-    if (amount === null) issues.push("Invalid signed USD amount.")
     if (!description || description.length > 500)
       issues.push("Description must contain 1 to 500 characters.")
     if (currencyColumns.some((column) => cells[column].toUpperCase() !== "USD"))
       issues.push("Only USD rows can be imported.")
     if (sourceId && sourceId.length > 250)
       issues.push("Source ID exceeds 250 characters.")
-    if (issues.length || date === null || amount === null)
-      return { row, issues }
+    if (issues.length) return { row, issues }
+
+    const originalDate = cells[mapping.date]
+    const date = postedDate(originalDate)
+    const amount = mappedAmount(cells, mapping)
+    if (date === null || "original" in amount) {
+      return {
+        row,
+        correction: {
+          date:
+            date === null
+              ? { original: originalDate.slice(0, 120) }
+              : { value: date },
+          amount,
+          description,
+          sourceId,
+        },
+      }
+    }
     return {
       row,
       transaction: {
         postedDate: date,
+        amountCents: amount.cents,
         description,
-        amountCents: mapping.sign === "positive-outflow" ? -amount : amount,
         sourceId,
       },
     }
   })
+}
+
+function mappedAmount(
+  cells: string[],
+  mapping: ColumnMapping
+): TransactionCorrection["amount"] {
+  if ("amount" in mapping) {
+    const original = cells[mapping.amount]
+    const amount = signedCents(original)
+    if (amount === null) return { original: original.slice(0, 120) }
+    return { cents: mapping.sign === "positive-outflow" ? -amount : amount }
+  }
+
+  const debit = cells[mapping.debit]
+  const credit = cells[mapping.credit]
+  const debitCents = debit === "" ? 0 : signedCents(debit)
+  const creditCents = credit === "" ? 0 : signedCents(credit)
+  if (
+    (debit || credit) &&
+    debitCents !== null &&
+    creditCents !== null &&
+    !(debitCents && creditCents)
+  ) {
+    return { cents: Math.abs(creditCents) - Math.abs(debitCents) }
+  }
+  return {
+    original: `Debit ${debit.slice(0, 60) || "(blank)"} · Credit ${credit.slice(0, 60) || "(blank)"}`,
+  }
+}
+
+export function resolveRow(
+  {
+    row,
+    correction,
+  }: Extract<PreviewRow, { correction: TransactionCorrection }>,
+  date: FormDataEntryValue | null,
+  amount: FormDataEntryValue | null
+): PreviewRow | null {
+  const posted =
+    "value" in correction.date
+      ? correction.date.value
+      : typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)
+        ? postedDate(date)
+        : null
+  const cents =
+    "cents" in correction.amount
+      ? correction.amount.cents
+      : typeof amount === "string"
+        ? signedCents(amount.trim())
+        : null
+  if (posted === null || cents === null) return null
+  return {
+    row,
+    transaction: {
+      postedDate: posted,
+      amountCents: cents,
+      description: correction.description,
+      sourceId: correction.sourceId,
+    },
+  }
 }

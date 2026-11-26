@@ -26,17 +26,21 @@ const provider = Bun.serve({
     calls.push(body)
     if (failProvider)
       return new Response("private provider diagnostic", { status: 502 })
-    const sample = JSON.stringify(body.input)
+    const sample = JSON.stringify(
+      body.input.filter((message: { role: string }) => message.role === "user")
+    )
     const mapping =
       sample.includes("[redacted header]") && !sample.includes("posted")
         ? null
-        : {
-            date: 0,
-            description: 1,
-            amount: 2,
-            sourceId: 3,
-            sign: "positive-inflow",
-          }
+        : sample.includes("debit")
+          ? { date: 0, description: 1, debit: 2, credit: 3, sourceId: 4 }
+          : {
+              date: 0,
+              description: 1,
+              amount: 2,
+              sourceId: 3,
+              sign: "positive-inflow",
+            }
     return Response.json({
       id: "resp_test",
       model: "gpt-6-luna",
@@ -97,6 +101,7 @@ try {
 
   async function signedInPage(label: string) {
     const context = await browser.newContext({ baseURL: origin })
+    context.setDefaultTimeout(12_000)
     const email = `${label}-${randomUUID()}@example.test`
     const signup = await fetch(origin + "/api/auth/sign-up/email", {
       method: "POST",
@@ -382,6 +387,119 @@ try {
     .waitFor()
   assert.equal(calls.length, 7)
   assert.equal(await transactionCount(), 2)
+  await pool.query("update ai_daily_usage set requests = 0")
+  const split = [
+    "Posted Date,Description,Debit,Credit,Transaction ID",
+    "2026-10-17,Renamed pay,,1500.00,SOURCE-001",
+    "2026-10-12,Refund,,12.00,REFUND-1",
+    '10/11/2026,"Coffee ""Shop""",5.25,4.00,',
+    '2026-10-11,"Coffee ""Shop""",-5.25,,',
+    "2026-10-12,Refund repeated,0,12.00,REFUND-1",
+    "2026-10-15,Groceries,20.00,0,",
+  ].join("\n")
+  const splitPreview = await uploadPreview(owner, account, split, "split.csv")
+  await owner
+    .getByText("Duplicate source ID. Excluded.", { exact: true })
+    .nth(1)
+    .waitFor()
+  await owner.getByText(/Invalid or ambiguous amount Debit 5.25/).waitFor()
+  const beforeCorrection = await owner.context().newPage()
+  await beforeCorrection.goto(splitPreview)
+  await owner.getByLabel("Date for row 3").fill("2026-10-11")
+  await owner.getByLabel("Amount for row 3 (USD)").fill("coffee")
+  await owner.getByRole("button", { name: "Save row 3" }).click()
+  await owner
+    .getByRole("alert")
+    .filter({ hasText: "Enter a valid date" })
+    .waitFor()
+  await owner.getByLabel("Date for row 3").fill("2026-10-11")
+  await owner.getByLabel("Amount for row 3 (USD)").fill("-5.25")
+  await owner.getByRole("button", { name: "Save row 3" }).click()
+  await owner.getByLabel("Possible duplicate on row 3").waitFor()
+
+  await beforeCorrection
+    .getByLabel("Possible duplicate on row 4")
+    .selectOption("skip")
+  await beforeCorrection.getByRole("button", { name: "Confirm import" }).click()
+  await beforeCorrection
+    .getByText("The preview changed. Review it again before confirming.")
+    .waitFor()
+  assert.equal(await transactionCount(), 2)
+  await owner.reload()
+  await owner.getByLabel("Possible duplicate on row 3").selectOption("keep")
+  await owner.getByLabel("Possible duplicate on row 4").selectOption("skip")
+  await confirm(owner)
+  assert.equal(await transactionCount(), 5)
+  const splitTransactions = await pool.query(
+    "select posted_date::text, amount_cents::int, source_id from financial_transaction where import_id = $1 order by source_row",
+    [splitPreview.split("/").at(-1)]
+  )
+  assert.deepEqual(splitTransactions.rows, [
+    { posted_date: "2026-10-12", amount_cents: 1200, source_id: "REFUND-1" },
+    { posted_date: "2026-10-11", amount_cents: -525, source_id: null },
+    { posted_date: "2026-10-15", amount_cents: -2000, source_id: null },
+  ])
+  await owner.getByText("3 imported · 0 excluded · Net total -$13.25").waitFor()
+
+  await uploadPreview(owner, secondAccount, split)
+  assert.equal(
+    await owner
+      .getByText("Duplicate source ID. Excluded.", { exact: true })
+      .count(),
+    1
+  )
+  await confirm(owner)
+  assert.equal(await transactionCount(), 9)
+
+  const racing = await Promise.all(
+    ["First", "Second"].map(async (description) => {
+      const page = await owner.context().newPage()
+      await uploadPreview(
+        page,
+        account,
+        `Posted Date,Description,Debit,Credit,Transaction ID\n2026-10-18,${description},3.00,,RACE-1`
+      )
+      return page
+    })
+  )
+  await Promise.all(
+    racing.map((page) =>
+      page.getByRole("button", { name: "Confirm import" }).click()
+    )
+  )
+  for (const page of racing) {
+    await page
+      .getByRole("heading", { name: "Confirmed import" })
+      .or(page.getByText("There are no new transactions selected to import."))
+      .waitFor()
+  }
+  const confirmed = await Promise.all(
+    racing.map((page) =>
+      page.getByRole("heading", { name: "Confirmed import" }).count()
+    )
+  )
+  assert.equal(
+    confirmed.reduce((sum, count) => sum + count, 0),
+    1
+  )
+  assert.equal(await transactionCount(), 10)
+  assert.equal(
+    (
+      await pool.query(
+        "select count(*) from financial_transaction where source_id = 'RACE-1'"
+      )
+    ).rows[0].count,
+    "1"
+  )
+  const loser = racing[confirmed.indexOf(0)]
+  await loser
+    .getByText("Duplicate source ID. Excluded.", { exact: true })
+    .waitFor()
+  assert.equal(
+    await loser.getByRole("button", { name: "Confirm import" }).isDisabled(),
+    true
+  )
+
   console.log(
     "CSV import passed in Chromium against isolated Postgres and a controlled GPT-6 Luna Responses endpoint."
   )

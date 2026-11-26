@@ -9,6 +9,7 @@ import { MAX_CSV_BYTES, parseCsv, previewRows } from "@/lib/csv-import/csv"
 import {
   cancelCsvImport,
   confirmCsvImport,
+  correctCsvRow,
   deleteExpiredPreviews,
   findExistingImport,
   savePreview,
@@ -54,7 +55,10 @@ export async function uploadCsv(
     return "Luna could not map this CSV right now. Try again in a moment."
   }
   if (!mapping)
-    return "Use a CSV with date, description, and one signed USD amount column."
+    return "Use a CSV with date, description, and either a signed USD amount column or separate debit and credit columns."
+
+  const columnName = (index: number) =>
+    csv.headers[index].slice(0, 120) || `Column ${index + 1}`
 
   const id = await savePreview({
     accountId: account.id,
@@ -64,16 +68,14 @@ export async function uploadCsv(
       "Transactions.csv",
     preview: {
       columns: {
-        date:
-          csv.headers[mapping.date].slice(0, 120) ||
-          `Column ${mapping.date + 1}`,
-        description:
-          csv.headers[mapping.description].slice(0, 120) ||
-          `Column ${mapping.description + 1}`,
-        amount:
-          csv.headers[mapping.amount].slice(0, 120) ||
-          `Column ${mapping.amount + 1}`,
-        sign: mapping.sign,
+        date: columnName(mapping.date),
+        description: columnName(mapping.description),
+        ...("amount" in mapping
+          ? { amount: columnName(mapping.amount), sign: mapping.sign }
+          : {
+              debit: columnName(mapping.debit),
+              credit: columnName(mapping.credit),
+            }),
       },
       rows: previewRows(csv, mapping),
     },
@@ -82,13 +84,44 @@ export async function uploadCsv(
   redirect(`${accountPath}/imports/${id}`)
 }
 
-export async function confirmImport(accountId: string, importId: string) {
+export async function confirmImport(
+  accountId: string,
+  importId: string,
+  corrections: number,
+  fields: FormData
+) {
   const account = await getFinancialAccount(accountId)
   if (!validUuid(importId)) notFound()
-  if ((await confirmCsvImport(account.id, importId)) !== "confirmed") notFound()
+  const result = await confirmCsvImport(
+    account.id,
+    importId,
+    corrections,
+    fields
+  )
+  if (result === "unavailable") notFound()
   const accountPath = `/financial-accounts/${account.id}`
+  const importPath = `${accountPath}/imports/${importId}`
   revalidatePath(accountPath)
-  redirect(`${accountPath}/imports/${importId}`)
+  redirect(
+    result === "confirmed" ? importPath : `${importPath}?notice=${result}`
+  )
+}
+
+export async function correctImportRow(
+  accountId: string,
+  importId: string,
+  sourceRow: number,
+  fields: FormData
+) {
+  const account = await getFinancialAccount(accountId)
+  if (!validUuid(importId)) notFound()
+  const result = await correctCsvRow(account.id, importId, sourceRow, fields)
+  if (result === "unavailable") notFound()
+  const path = `/financial-accounts/${account.id}/imports/${importId}`
+  revalidatePath(path)
+  redirect(
+    result === "invalid" ? `${path}?notice=invalid&row=${sourceRow}` : path
+  )
 }
 
 export async function cancelImport(accountId: string, importId: string) {

@@ -158,7 +158,10 @@ export const financialAccount = pgTable(
 );
 
 type ImportPreview = {
-  columns: { date: string; description: string; amount: string; sign: "positive-inflow" | "positive-outflow" };
+  columns: { date: string; description: string } & (
+    | { amount: string; sign: "positive-inflow" | "positive-outflow" }
+    | { debit: string; credit: string }
+  );
   rows: PreviewRow[];
 };
 
