@@ -2,7 +2,7 @@ import "server-only"
 
 import { generateText, jsonSchema, Output } from "ai"
 
-import { formatUsd } from "@/app/spending/model"
+import { formatUsd } from "@/app/(workspace)/spending/model"
 import { explanationModel, explanationProviderOptions, openai } from "@/lib/ai"
 
 import { type InsightSnapshot, supportsSuggestion } from "./model"

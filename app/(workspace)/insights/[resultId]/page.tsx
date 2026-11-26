@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import { requireUserId, validUuid } from "@/app/financial-accounts/accounts"
-import { formatUsd } from "@/app/spending/model"
+import { requireUserId, validUuid } from "@/app/(workspace)/financial-accounts/accounts"
+import { formatUsd } from "@/app/(workspace)/spending/model"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getResult } from "@/lib/saved-results"
 
@@ -20,7 +20,7 @@ export default async function InsightPage({
   const { sourcePeriod, inputs, values, assumptions, explanation } =
     result.snapshot
   return (
-    <main className="mx-auto max-w-3xl space-y-6 px-6 py-12">
+    <main className="workspace-page workspace-page-narrow space-y-6">
       <Link href="/insights" className="text-sm underline underline-offset-4">
         Spending Insights
       </Link>

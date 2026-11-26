@@ -1,7 +1,7 @@
 import Link from "next/link"
 
-import { requireUserId } from "@/app/financial-accounts/accounts"
-import { formatUsd, monthRange } from "@/app/spending/model"
+import { requireUserId } from "@/app/(workspace)/financial-accounts/accounts"
+import { formatUsd, monthRange } from "@/app/(workspace)/spending/model"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { payScheduleLabels } from "@/lib/income"
 import { listPayDifferences } from "@/lib/pay-review/records"
@@ -27,7 +27,7 @@ export default async function ProjectionsPage({
       : []
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 px-6 py-12">
+    <main className="workspace-page workspace-page-narrow space-y-6">
       <Link href="/" className="text-sm underline underline-offset-4">
         Home
       </Link>

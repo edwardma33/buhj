@@ -1,4 +1,4 @@
-import { spendingCategory, summarizeSpending } from "@/app/spending/model"
+import { spendingCategory, summarizeSpending } from "@/app/(workspace)/spending/model"
 
 type Category = ReturnType<typeof spendingCategory>
 type SpendingEntry = Parameters<typeof summarizeSpending>[0][number] & {

@@ -1,0 +1,307 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-26T19:05:40.300Z",
+  "title": "Buhj design system",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "neutral",
+        "displayName": "Primary action",
+        "tonalRamp": ["oklch(15% 0.002 285.9)", "oklch(26% 0.004 285.9)", "oklch(37% 0.006 285.9)", "oklch(49% 0.007 285.9)", "oklch(61% 0.007 285.9)", "oklch(73% 0.006 285.9)", "oklch(85% 0.004 285.9)", "oklch(95% 0.002 285.9)"]
+      },
+      "primary-foreground": {
+        "role": "neutral",
+        "displayName": "Primary action text",
+        "tonalRamp": ["oklch(15% 0.000 0.0)", "oklch(26% 0.000 0.0)", "oklch(37% 0.000 0.0)", "oklch(49% 0.000 0.0)", "oklch(61% 0.000 0.0)", "oklch(73% 0.000 0.0)", "oklch(85% 0.000 0.0)", "oklch(95% 0.000 0.0)"]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Workspace canvas",
+        "tonalRamp": ["oklch(15% 0.000 286.4)", "oklch(26% 0.001 286.4)", "oklch(37% 0.001 286.4)", "oklch(49% 0.001 286.4)", "oklch(61% 0.001 286.4)", "oklch(73% 0.001 286.4)", "oklch(85% 0.001 286.4)", "oklch(95% 0.000 286.4)"]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Text and figures",
+        "tonalRamp": ["oklch(15% 0.002 271.2)", "oklch(26% 0.003 271.2)", "oklch(37% 0.004 271.2)", "oklch(49% 0.006 271.2)", "oklch(61% 0.006 271.2)", "oklch(73% 0.005 271.2)", "oklch(85% 0.003 271.2)", "oklch(95% 0.002 271.2)"]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Panel surface",
+        "tonalRamp": ["oklch(15% 0.000 0.0)", "oklch(26% 0.000 0.0)", "oklch(37% 0.000 0.0)", "oklch(49% 0.000 0.0)", "oklch(61% 0.000 0.0)", "oklch(73% 0.000 0.0)", "oklch(85% 0.000 0.0)", "oklch(95% 0.000 0.0)"]
+      },
+      "sidebar": {
+        "role": "neutral",
+        "displayName": "Navigation surface",
+        "tonalRamp": ["oklch(15% 0.001 286.3)", "oklch(26% 0.001 286.3)", "oklch(37% 0.002 286.3)", "oklch(49% 0.003 286.3)", "oklch(61% 0.003 286.3)", "oklch(73% 0.002 286.3)", "oklch(85% 0.002 286.3)", "oklch(95% 0.001 286.3)"]
+      },
+      "sidebar-accent": {
+        "role": "neutral",
+        "displayName": "Navigation hover and active surface",
+        "tonalRamp": ["oklch(15% 0.002 286.3)", "oklch(26% 0.003 286.3)", "oklch(37% 0.004 286.3)", "oklch(49% 0.005 286.3)", "oklch(61% 0.005 286.3)", "oklch(73% 0.005 286.3)", "oklch(85% 0.003 286.3)", "oklch(95% 0.001 286.3)"]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Secondary text",
+        "tonalRamp": ["oklch(15% 0.004 285.9)", "oklch(26% 0.007 285.9)", "oklch(37% 0.010 285.9)", "oklch(49% 0.012 285.9)", "oklch(61% 0.013 285.9)", "oklch(73% 0.011 285.9)", "oklch(85% 0.007 285.9)", "oklch(95% 0.003 285.9)"]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Divider",
+        "tonalRamp": ["oklch(15% 0.002 286.3)", "oklch(26% 0.004 286.3)", "oklch(37% 0.005 286.3)", "oklch(49% 0.006 286.3)", "oklch(61% 0.007 286.3)", "oklch(73% 0.006 286.3)", "oklch(85% 0.004 286.3)", "oklch(95% 0.002 286.3)"]
+      },
+      "input": {
+        "role": "neutral",
+        "displayName": "Field boundary",
+        "tonalRamp": ["oklch(15% 0.004 286.1)", "oklch(26% 0.007 286.1)", "oklch(37% 0.010 286.1)", "oklch(49% 0.012 286.1)", "oklch(61% 0.013 286.1)", "oklch(73% 0.011 286.1)", "oklch(85% 0.007 286.1)", "oklch(95% 0.003 286.1)"]
+      },
+      "ring": {
+        "role": "primary",
+        "displayName": "Keyboard focus",
+        "tonalRamp": ["oklch(15% 0.042 292.7)", "oklch(26% 0.078 292.7)", "oklch(37% 0.114 292.7)", "oklch(49% 0.142 292.7)", "oklch(61% 0.117 292.7)", "oklch(73% 0.081 292.7)", "oklch(85% 0.045 292.7)", "oklch(95% 0.015 292.7)"]
+      },
+      "selected": {
+        "role": "primary",
+        "displayName": "Selected surface",
+        "tonalRamp": ["oklch(15% 0.007 298.6)", "oklch(26% 0.013 298.6)", "oklch(37% 0.019 298.6)", "oklch(49% 0.023 298.6)", "oklch(61% 0.025 298.6)", "oklch(73% 0.021 298.6)", "oklch(85% 0.015 298.6)", "oklch(95% 0.007 298.6)"]
+      },
+      "selected-foreground": {
+        "role": "primary",
+        "displayName": "Selected text",
+        "tonalRamp": ["oklch(15% 0.034 291.3)", "oklch(26% 0.063 291.3)", "oklch(37% 0.092 291.3)", "oklch(49% 0.116 291.3)", "oklch(61% 0.117 291.3)", "oklch(73% 0.081 291.3)", "oklch(85% 0.045 291.3)", "oklch(95% 0.015 291.3)"]
+      },
+      "selected-border": {
+        "role": "primary",
+        "displayName": "Selection boundary",
+        "tonalRamp": ["oklch(15% 0.018 300.2)", "oklch(26% 0.033 300.2)", "oklch(37% 0.049 300.2)", "oklch(49% 0.061 300.2)", "oklch(61% 0.064 300.2)", "oklch(73% 0.055 300.2)", "oklch(85% 0.038 300.2)", "oklch(95% 0.015 300.2)"]
+      },
+      "accent-emphasis": {
+        "role": "primary",
+        "displayName": "Lavender emphasis",
+        "tonalRamp": ["oklch(15% 0.037 293.0)", "oklch(26% 0.068 293.0)", "oklch(37% 0.100 293.0)", "oklch(49% 0.125 293.0)", "oklch(61% 0.117 293.0)", "oklch(73% 0.081 293.0)", "oklch(85% 0.045 293.0)", "oklch(95% 0.015 293.0)"]
+      },
+      "financial-positive": {
+        "role": "secondary",
+        "displayName": "Positive amount",
+        "tonalRamp": ["oklch(15% 0.023 161.1)", "oklch(26% 0.043 161.1)", "oklch(37% 0.062 161.1)", "oklch(49% 0.078 161.1)", "oklch(61% 0.082 161.1)", "oklch(73% 0.070 161.1)", "oklch(85% 0.045 161.1)", "oklch(95% 0.015 161.1)"]
+      },
+      "financial-negative": {
+        "role": "secondary",
+        "displayName": "Negative amount",
+        "tonalRamp": ["oklch(15% 0.043 17.6)", "oklch(26% 0.080 17.6)", "oklch(37% 0.116 17.6)", "oklch(49% 0.146 17.6)", "oklch(61% 0.117 17.6)", "oklch(73% 0.081 17.6)", "oklch(85% 0.045 17.6)", "oklch(95% 0.015 17.6)"]
+      },
+      "dark-primary": {
+        "role": "neutral",
+        "displayName": "Primary action (dark)",
+        "tonalRamp": ["oklch(15% 0.000 286.4)", "oklch(26% 0.001 286.4)", "oklch(37% 0.001 286.4)", "oklch(49% 0.001 286.4)", "oklch(61% 0.001 286.4)", "oklch(73% 0.001 286.4)", "oklch(85% 0.001 286.4)", "oklch(95% 0.000 286.4)"]
+      },
+      "dark-primary-foreground": {
+        "role": "neutral",
+        "displayName": "Primary action text (dark)",
+        "tonalRamp": ["oklch(15% 0.002 271.2)", "oklch(26% 0.003 271.2)", "oklch(37% 0.004 271.2)", "oklch(49% 0.006 271.2)", "oklch(61% 0.006 271.2)", "oklch(73% 0.005 271.2)", "oklch(85% 0.003 271.2)", "oklch(95% 0.002 271.2)"]
+      },
+      "dark-background": {
+        "role": "neutral",
+        "displayName": "Workspace canvas (dark)",
+        "tonalRamp": ["oklch(15% 0.001 247.9)", "oklch(26% 0.001 247.9)", "oklch(37% 0.002 247.9)", "oklch(49% 0.002 247.9)", "oklch(61% 0.002 247.9)", "oklch(73% 0.002 247.9)", "oklch(85% 0.001 247.9)", "oklch(95% 0.001 247.9)"]
+      },
+      "dark-foreground": {
+        "role": "neutral",
+        "displayName": "Text and figures (dark)",
+        "tonalRamp": ["oklch(15% 0.000 286.4)", "oklch(26% 0.001 286.4)", "oklch(37% 0.001 286.4)", "oklch(49% 0.001 286.4)", "oklch(61% 0.001 286.4)", "oklch(73% 0.001 286.4)", "oklch(85% 0.001 286.4)", "oklch(95% 0.000 286.4)"]
+      },
+      "dark-card": {
+        "role": "neutral",
+        "displayName": "Panel surface (dark)",
+        "tonalRamp": ["oklch(15% 0.001 247.9)", "oklch(26% 0.001 247.9)", "oklch(37% 0.002 247.9)", "oklch(49% 0.002 247.9)", "oklch(61% 0.002 247.9)", "oklch(73% 0.002 247.9)", "oklch(85% 0.001 247.9)", "oklch(95% 0.001 247.9)"]
+      },
+      "dark-sidebar": {
+        "role": "neutral",
+        "displayName": "Navigation surface (dark)",
+        "tonalRamp": ["oklch(15% 0.000 197.0)", "oklch(26% 0.001 197.0)", "oklch(37% 0.001 197.0)", "oklch(49% 0.001 197.0)", "oklch(61% 0.002 197.0)", "oklch(73% 0.001 197.0)", "oklch(85% 0.001 197.0)", "oklch(95% 0.000 197.0)"]
+      },
+      "dark-sidebar-accent": {
+        "role": "neutral",
+        "displayName": "Navigation hover and active surface (dark)",
+        "tonalRamp": ["oklch(15% 0.001 264.5)", "oklch(26% 0.002 264.5)", "oklch(37% 0.003 264.5)", "oklch(49% 0.004 264.5)", "oklch(61% 0.004 264.5)", "oklch(73% 0.003 264.5)", "oklch(85% 0.002 264.5)", "oklch(95% 0.001 264.5)"]
+      },
+      "dark-muted-foreground": {
+        "role": "neutral",
+        "displayName": "Secondary text (dark)",
+        "tonalRamp": ["oklch(15% 0.003 286.2)", "oklch(26% 0.005 286.2)", "oklch(37% 0.008 286.2)", "oklch(49% 0.009 286.2)", "oklch(61% 0.010 286.2)", "oklch(73% 0.009 286.2)", "oklch(85% 0.006 286.2)", "oklch(95% 0.003 286.2)"]
+      },
+      "dark-border": {
+        "role": "neutral",
+        "displayName": "Divider (dark)",
+        "tonalRamp": ["oklch(15% 0.002 271.3)", "oklch(26% 0.003 271.3)", "oklch(37% 0.004 271.3)", "oklch(49% 0.005 271.3)", "oklch(61% 0.005 271.3)", "oklch(73% 0.005 271.3)", "oklch(85% 0.003 271.3)", "oklch(95% 0.001 271.3)"]
+      },
+      "dark-input": {
+        "role": "neutral",
+        "displayName": "Field boundary (dark)",
+        "tonalRamp": ["oklch(15% 0.003 278.4)", "oklch(26% 0.005 278.4)", "oklch(37% 0.007 278.4)", "oklch(49% 0.009 278.4)", "oklch(61% 0.010 278.4)", "oklch(73% 0.008 278.4)", "oklch(85% 0.006 278.4)", "oklch(95% 0.003 278.4)"]
+      },
+      "dark-ring": {
+        "role": "primary",
+        "displayName": "Keyboard focus (dark)",
+        "tonalRamp": ["oklch(15% 0.032 296.3)", "oklch(26% 0.059 296.3)", "oklch(37% 0.087 296.3)", "oklch(49% 0.108 296.3)", "oklch(61% 0.114 296.3)", "oklch(73% 0.081 296.3)", "oklch(85% 0.045 296.3)", "oklch(95% 0.015 296.3)"]
+      },
+      "dark-selected": {
+        "role": "primary",
+        "displayName": "Selected surface (dark)",
+        "tonalRamp": ["oklch(15% 0.012 299.0)", "oklch(26% 0.023 299.0)", "oklch(37% 0.033 299.0)", "oklch(49% 0.042 299.0)", "oklch(61% 0.044 299.0)", "oklch(73% 0.038 299.0)", "oklch(85% 0.026 299.0)", "oklch(95% 0.012 299.0)"]
+      },
+      "dark-selected-foreground": {
+        "role": "primary",
+        "displayName": "Selected text (dark)",
+        "tonalRamp": ["oklch(15% 0.008 298.3)", "oklch(26% 0.016 298.3)", "oklch(37% 0.023 298.3)", "oklch(49% 0.029 298.3)", "oklch(61% 0.030 298.3)", "oklch(73% 0.026 298.3)", "oklch(85% 0.018 298.3)", "oklch(95% 0.008 298.3)"]
+      },
+      "dark-selected-border": {
+        "role": "primary",
+        "displayName": "Selection boundary (dark)",
+        "tonalRamp": ["oklch(15% 0.019 301.0)", "oklch(26% 0.034 301.0)", "oklch(37% 0.050 301.0)", "oklch(49% 0.063 301.0)", "oklch(61% 0.066 301.0)", "oklch(73% 0.057 301.0)", "oklch(85% 0.039 301.0)", "oklch(95% 0.015 301.0)"]
+      },
+      "dark-accent-emphasis": {
+        "role": "primary",
+        "displayName": "Lavender emphasis (dark)",
+        "tonalRamp": ["oklch(15% 0.031 296.3)", "oklch(26% 0.057 296.3)", "oklch(37% 0.084 296.3)", "oklch(49% 0.104 296.3)", "oklch(61% 0.110 296.3)", "oklch(73% 0.081 296.3)", "oklch(85% 0.045 296.3)", "oklch(95% 0.015 296.3)"]
+      },
+      "dark-financial-positive": {
+        "role": "secondary",
+        "displayName": "Positive amount (dark)",
+        "tonalRamp": ["oklch(15% 0.026 158.2)", "oklch(26% 0.048 158.2)", "oklch(37% 0.070 158.2)", "oklch(49% 0.088 158.2)", "oklch(61% 0.092 158.2)", "oklch(73% 0.079 158.2)", "oklch(85% 0.045 158.2)", "oklch(95% 0.015 158.2)"]
+      },
+      "dark-financial-negative": {
+        "role": "secondary",
+        "displayName": "Negative amount (dark)",
+        "tonalRamp": ["oklch(15% 0.031 14.4)", "oklch(26% 0.058 14.4)", "oklch(37% 0.085 14.4)", "oklch(49% 0.106 14.4)", "oklch(61% 0.112 14.4)", "oklch(73% 0.081 14.4)", "oklch(85% 0.045 14.4)", "oklch(95% 0.015 14.4)"]
+      }
+    },
+    "typographyMeta": {
+      "page-title": {
+        "displayName": "Page title",
+        "purpose": "Names the current task or report."
+      },
+      "body": {
+        "displayName": "Compact body",
+        "purpose": "Tables, controls, and supporting text."
+      },
+      "nav-label": {
+        "displayName": "Navigation label",
+        "purpose": "Names workspace destinations."
+      },
+      "location-label": {
+        "displayName": "Location label",
+        "purpose": "Names the current destination in the top bar."
+      }
+    },
+    "shadows": [
+      {
+        "name": "menu",
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "purpose": "Separates the Appearance menu from the workspace."
+      },
+      {
+        "name": "sheet",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "Separates the navigation sheet from the dimmed workspace."
+      }
+    ],
+    "motion": [
+      {
+        "name": "appearance-menu",
+        "value": "100ms",
+        "purpose": "Opens and closes the Appearance menu."
+      },
+      {
+        "name": "sheet-backdrop",
+        "value": "150ms",
+        "purpose": "Fades the navigation backdrop."
+      },
+      {
+        "name": "navigation-sheet",
+        "value": "200ms ease-in-out",
+        "purpose": "Opens and closes the navigation sheet."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "workspace-rail",
+        "value": "64rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Use the default button for the main action.",
+      "html": "<button type=\"button\" class=\"ds-button-primary\">Save changes</button>",
+      "css": ".ds-button-primary { display: inline-flex; align-items: center; justify-content: center; height: 2rem; padding: 0 .625rem; border: 1px solid transparent; border-radius: var(--radius, .5rem); font: 500 .875rem/1.25rem var(--font-sans, Geist, system-ui, sans-serif); white-space: nowrap; transition: background-color 150ms; background: var(--primary, #242428); color: var(--primary-foreground, #fafafa); }\n.ds-button-primary:hover { background: color-mix(in srgb, var(--primary, #242428) 80%, transparent); }\n.ds-button-primary:focus-visible { outline: 2px solid var(--ring, #6247a8); outline-offset: 2px; }\n.ds-button-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Outline button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Use the outline button for filters and secondary actions.",
+      "html": "<button type=\"button\" class=\"ds-button-outline\">Apply filters</button>",
+      "css": ".ds-button-outline { display: inline-flex; align-items: center; justify-content: center; height: 2rem; padding: 0 .625rem; border: 1px solid transparent; border-radius: var(--radius, .5rem); font: 500 .875rem/1.25rem var(--font-sans, Geist, system-ui, sans-serif); white-space: nowrap; transition: background-color 150ms; background: var(--background, #fcfcfd); color: var(--foreground, #202124); border-color: var(--border, #dddde2); }\n.ds-button-outline:hover { background: var(--muted, #f2f2f4); }\n.ds-button-outline:focus-visible { outline: 2px solid var(--ring, #6247a8); outline-offset: 2px; }\n.ds-button-outline:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Ghost button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Use the ghost button for workspace utilities.",
+      "html": "<button type=\"button\" class=\"ds-button-ghost\">Sign out</button>",
+      "css": ".ds-button-ghost { display: inline-flex; align-items: center; justify-content: center; height: 2rem; padding: 0 .625rem; border: 1px solid transparent; border-radius: var(--radius, .5rem); font: 500 .875rem/1.25rem var(--font-sans, Geist, system-ui, sans-serif); white-space: nowrap; transition: background-color 150ms; background: transparent; color: var(--foreground, #202124); }\n.ds-button-ghost:hover { background: var(--muted, #f2f2f4); }\n.ds-button-ghost:focus-visible { outline: 2px solid var(--ring, #6247a8); outline-offset: 2px; }\n.ds-button-ghost:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A compact text field with a persistent label.",
+      "html": "<label class=\"ds-field-label\">Account name<input class=\"ds-field-input\" placeholder=\"Enter a name\"></label>",
+      "css": ".ds-field-label { display: grid; gap: .5rem; color: var(--foreground, #202124); font: 500 .875rem/1.25rem var(--font-sans, Geist, system-ui, sans-serif); }\n.ds-field-input { box-sizing: border-box; width: 100%; height: 2rem; padding: .25rem .625rem; border: 1px solid var(--input, #bdbdc6); border-radius: var(--radius, .5rem); background: transparent; color: var(--foreground, #202124); font: 400 1rem/1.25rem var(--font-sans, Geist, system-ui, sans-serif); }\n.ds-field-input::placeholder { color: var(--muted-foreground, #5d5d65); }\n.ds-field-input:focus-visible { outline: 2px solid var(--ring, #6247a8); outline-offset: 2px; }\n@media (min-width: 48rem) { .ds-field-input { font-size: .875rem; } }"
+    },
+    {
+      "name": "Workspace navigation",
+      "kind": "nav",
+      "refersTo": "workspace-navigation",
+      "description": "Navigation uses labeled destinations and a distinct current item.",
+      "html": "<nav aria-label=\"Main navigation\" class=\"ds-nav\"><a class=\"ds-nav-link\" href=\"#overview\"><svg aria-hidden=\"true\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg>Overview</a><a class=\"ds-nav-link\" href=\"#spending\" aria-current=\"page\"><svg aria-hidden=\"true\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 3v18h18M8 16v-3m5 3V8m5 8V5\"/></svg>Spending</a></nav>",
+      "css": ".ds-nav { box-sizing: border-box; width: min(100%, var(--workspace-rail-width, 12.875rem)); display: grid; gap: .25rem; padding: var(--workspace-nav-padding, .8125rem); background: var(--sidebar, #f3f3f5); border-inline-end: 1px solid var(--sidebar-border, #dddde2); font: 500 .875rem/1.25rem var(--font-sans, Geist, system-ui, sans-serif); }\n.ds-nav-link { display: flex; align-items: center; gap: .625rem; min-height: var(--workspace-nav-row, 2.375rem); box-sizing: border-box; padding-inline: .625rem; color: var(--muted-foreground, #5d5d65); border: 1px solid transparent; border-radius: calc(var(--radius, .5rem) * .8); text-decoration: none; }\n.ds-nav-link:hover, .ds-nav-link[aria-current] { background: var(--sidebar-accent, #e7e7eb); color: var(--foreground, #202124); }\n.ds-nav-link[aria-current] { border-color: var(--sidebar-border, #dddde2); font-weight: 650; }\n.ds-nav-link[aria-current] svg { color: var(--accent-emphasis, #574093); }\n.ds-nav-link:focus-visible { outline: 2px solid var(--ring, #6247a8); outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "A neutral panel groups related information behind a fine outline.",
+      "html": "<section class=\"ds-card\" aria-label=\"Account summary\"><h3 class=\"ds-card-title\">Confirmed activity</h3><p class=\"ds-card-description\">October 2026</p><p class=\"ds-card-amount\">+$396.50</p></section>",
+      "css": ".ds-card { display: grid; gap: .25rem; border-radius: calc(var(--radius, .5rem) * 1.4); padding: 1rem; background: var(--card, #ffffff); color: var(--card-foreground, #202124); box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground, #202124) 10%, transparent); font: 400 .875rem/1.25rem var(--font-sans, Geist, system-ui, sans-serif); }\n.ds-card-title { margin: 0; font-size: 1rem; line-height: 1.375; font-weight: 500; }\n.ds-card-description { margin: 0; color: var(--muted-foreground, #5d5d65); }\n.ds-card-amount { margin: .75rem 0 0; font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Transaction table",
+      "kind": "custom",
+      "refersTo": "table",
+      "description": "A compact table keeps text readable and signed amounts aligned.",
+      "html": "<div class=\"ds-table-region\" role=\"region\" aria-label=\"Transactions\" tabindex=\"0\"><table class=\"ds-table\" aria-label=\"Sample transactions\"><thead><tr><th scope=\"col\">Description</th><th scope=\"col\" class=\"ds-table-amount\">Amount</th></tr></thead><tbody><tr><td>Maple Street Market</td><td class=\"ds-table-amount\">−$112.45</td></tr><tr><td>Maple Street Market <small class=\"ds-table-detail\">Refund</small></td><td class=\"ds-table-amount\">+$29.99</td></tr></tbody></table></div>",
+      "css": ".ds-table-region { width: 100%; overflow-x: auto; }\n.ds-table-region:focus-visible { outline: 2px solid var(--ring, #6247a8); outline-offset: 2px; }\n.ds-table { width: 100%; border-collapse: collapse; color: var(--foreground, #202124); font: 400 .875rem/1.25rem var(--font-sans, Geist, system-ui, sans-serif); }\n.ds-table th, .ds-table td { padding: .5rem; text-align: start; border-bottom: 1px solid var(--border, #dddde2); }\n.ds-table th { font-weight: 500; }\n.ds-table tbody tr:last-child td { border-bottom: 0; }\n.ds-table tbody tr:hover { background: color-mix(in srgb, var(--muted, #f2f2f4) 50%, transparent); }\n.ds-table .ds-table-amount { text-align: end; white-space: nowrap; font-variant-numeric: tabular-nums; }\n.ds-table-detail { display: block; color: var(--muted-foreground, #5d5d65); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Readable financial records",
+    "overview": "Buhj uses compact layouts, neutral surfaces, and quiet dividers so people can read a month of activity and trace totals to individual records. Keep the date and account scope near the figures they qualify. Give the page title, the next action, and the figures enough weight to establish the reading order.",
+    "keyCharacteristics": [
+      "Matte light and dark surfaces with one lavender accent.",
+      "Compact navigation with a visible label for each destination.",
+      "Tabular amounts and labeled states that read in grayscale."
+    ],
+    "rules": [],
+    "dos": [
+      "Do check light and dark rendering, keyboard focus, and narrow layouts when adding a shared component or page.",
+      "Do check that users can identify selections, inflows, and outflows in grayscale."
+    ],
+    "donts": [
+      "Don't assign new page-specific colors to a role already covered by the shared theme."
+    ]
+  }
+}

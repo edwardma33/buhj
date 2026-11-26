@@ -4,7 +4,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatUsd } from "@/app/spending/model"
+import { formatUsd } from "@/app/(workspace)/spending/model"
 import {
   Table,
   TableBody,
@@ -35,7 +35,7 @@ export default async function IncomePage() {
   const { cadence } = observed
 
   return (
-    <main className="mx-auto max-w-3xl space-y-4 px-6 py-16">
+    <main className="workspace-page workspace-page-narrow space-y-4">
       <Link href="/" className="text-sm underline underline-offset-4">
         Back to dashboard
       </Link>

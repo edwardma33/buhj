@@ -3,7 +3,7 @@
 import { and, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
-import { requireUserId } from "@/app/financial-accounts/accounts"
+import { requireUserId } from "@/app/(workspace)/financial-accounts/accounts"
 import { db } from "@/lib/db"
 import { payReviewDismissal, payReviewMonth } from "@/lib/db/schema"
 import { completedMonth, readExpectedDates } from "@/lib/pay-review/model"
