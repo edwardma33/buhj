@@ -3,6 +3,11 @@ import {
   bigint,
   boolean,
   check,
+  date,
+  integer,
+  jsonb,
+  primaryKey,
+  uniqueIndex,
   index,
   pgEnum,
   pgTable,
@@ -11,6 +16,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import type { PreviewRow } from "../csv-import/csv";
 import { payScheduleValues } from "../income";
 
 export const user = pgTable("user", {
@@ -149,4 +155,59 @@ export const financialAccount = pgTable(
     institution: text("institution").notNull(),
   },
   (table) => [index("financial_account_user_id_idx").on(table.userId)],
+);
+
+type ImportPreview = {
+  columns: { date: string; description: string; amount: string; sign: "positive-inflow" | "positive-outflow" };
+  rows: PreviewRow[];
+};
+
+export const csvImport = pgTable(
+  "csv_import",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    accountId: uuid("account_id").notNull().references(() => financialAccount.id, { onDelete: "cascade" }),
+    fingerprint: text("fingerprint").notNull(),
+    filename: text("filename").notNull(),
+    preview: jsonb("preview").$type<ImportPreview>(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+    transactionCount: integer("transaction_count"),
+  },
+  (table) => [
+    uniqueIndex("csv_import_account_fingerprint_idx").on(table.accountId, table.fingerprint),
+    index("csv_import_expiry_idx").on(table.expiresAt).where(sql`${table.expiresAt} is not null`),
+    check("csv_import_lifecycle", sql`
+      (${table.preview} is not null and ${table.expiresAt} is not null
+       and ${table.confirmedAt} is null and ${table.transactionCount} is null)
+      or
+      (${table.preview} is null and ${table.expiresAt} is null
+       and ${table.confirmedAt} is not null and ${table.transactionCount} is not null
+       and ${table.transactionCount} > 0)
+    `),
+  ],
+);
+
+export const financialTransaction = pgTable(
+  "financial_transaction",
+  {
+    importId: uuid("import_id").notNull().references(() => csvImport.id, { onDelete: "cascade" }),
+    sourceRow: integer("source_row").notNull(),
+    postedDate: date("posted_date").notNull(),
+    description: text("description").notNull(),
+    amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
+    category: text("category").default("Uncategorized").notNull(),
+    sourceId: text("source_id"),
+  },
+  (table) => [primaryKey({ columns: [table.importId, table.sourceRow] })],
+);
+
+export const aiDailyUsage = pgTable(
+  "ai_daily_usage",
+  {
+    day: date("day").notNull(),
+    bucket: text("bucket").notNull(),
+    requests: integer("requests").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.day, table.bucket] })],
 );
