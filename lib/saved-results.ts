@@ -5,7 +5,7 @@ import { and, desc, eq, gt, isNotNull, isNull, lte, or, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { savedResult } from "@/lib/db/schema"
 
-import type { InsightSnapshot } from "./model"
+type ResultSnapshot = typeof savedResult.$inferSelect.snapshot
 
 const draftCutoff = sql<Date>`now() - interval '24 hours'`
 const visible = or(
@@ -13,18 +13,18 @@ const visible = or(
   gt(savedResult.createdAt, draftCutoff)
 )
 
-function ownedInsight(userId: string, id: string) {
+function ownedResult(userId: string, id: string, kind: ResultSnapshot["kind"]) {
   return and(
     eq(savedResult.id, id),
     eq(savedResult.userId, userId),
-    eq(savedResult.kind, "insight"),
+    eq(savedResult.kind, kind),
     visible
   )
 }
 
-export async function createInsightDraft(
+export async function createResultDraft(
   userId: string,
-  snapshot: InsightSnapshot
+  snapshot: ResultSnapshot
 ) {
   const [result] = await db
     .insert(savedResult)
@@ -33,37 +33,51 @@ export async function createInsightDraft(
   return result.id
 }
 
-export async function getInsight(userId: string, id: string) {
+export async function getResult(
+  userId: string,
+  id: string,
+  kind: ResultSnapshot["kind"]
+) {
   const [result] = await db
     .select()
     .from(savedResult)
-    .where(ownedInsight(userId, id))
+    .where(ownedResult(userId, id, kind))
   return result
 }
 
-export async function saveInsightDraft(userId: string, id: string) {
+export async function saveResultDraft(
+  userId: string,
+  id: string,
+  kind: ResultSnapshot["kind"]
+) {
   const [result] = await db
     .update(savedResult)
     .set({ savedAt: sql`coalesce(${savedResult.savedAt}, now())` })
-    .where(ownedInsight(userId, id))
+    .where(ownedResult(userId, id, kind))
     .returning({ id: savedResult.id })
   return result
 }
 
-export function listSavedInsights(userId: string) {
+export function listSavedResults(userId: string, kind: ResultSnapshot["kind"]) {
   return db
     .select({
       id: savedResult.id,
       savedAt: savedResult.savedAt,
+      scenarioKind: sql<
+        string | null
+      >`${savedResult.snapshot}->'scenario'->>'kind'`,
+      baselineKind: sql<
+        string | null
+      >`${savedResult.snapshot}->'baseline'->>'kind'`,
       sourcePeriod: sql<
-        InsightSnapshot["sourcePeriod"]
+        ResultSnapshot["sourcePeriod"]
       >`${savedResult.snapshot}->'sourcePeriod'`,
     })
     .from(savedResult)
     .where(
       and(
         eq(savedResult.userId, userId),
-        eq(savedResult.kind, "insight"),
+        eq(savedResult.kind, kind),
         isNotNull(savedResult.savedAt)
       )
     )

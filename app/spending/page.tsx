@@ -80,6 +80,12 @@ export default async function SpendingPage({
         >
           Spending Insights for this month
         </Link>
+        <Link
+          href={"/projections?month=" + month}
+          className="text-sm underline underline-offset-4"
+        >
+          Explore a savings Projection
+        </Link>
       </nav>
 
       <form className="flex flex-wrap items-end gap-3">

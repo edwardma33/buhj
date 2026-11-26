@@ -35,6 +35,12 @@ const provider = Bun.serve({
     assert.equal(request.headers.get("authorization"), "Bearer " + fakeKey)
     const body = await request.json()
     assert.equal(body.store, false)
+    assert.equal(
+      body.model,
+      responseMode === "mapping" ? "gpt-6-luna" : "gpt-6.1-terra"
+    )
+    assert.equal(body.reasoning?.effort, "none")
+    assert.equal(body.text?.format?.strict, true)
     const prompt = body.input.find(
       (message: { role: string }) => message.role === "user"
     )
@@ -74,6 +80,8 @@ const provider = Bun.serve({
     })
   },
 })
+const serverEnv = { ...process.env }
+delete serverEnv.OPENAI_INSIGHT_MODEL
 const server = Bun.spawn(
   [
     "node",
@@ -86,12 +94,11 @@ const server = Bun.spawn(
   ],
   {
     env: {
-      ...process.env,
+      ...serverEnv,
       BETTER_AUTH_URL: origin,
       BETTER_AUTH_SECRET: randomUUID() + randomUUID(),
       OPENAI_API_KEY: fakeKey,
       OPENAI_BASE_URL: `http://127.0.0.1:${provider.port}/v1`,
-      OPENAI_INSIGHT_MODEL: "gpt-6-luna",
       AI_DAILY_USER_LIMIT: "3",
       AI_DAILY_APP_LIMIT: "4",
       CRON_SECRET: cronSecret,

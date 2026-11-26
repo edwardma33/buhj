@@ -19,6 +19,9 @@ import {
 import type { PreviewRow } from "../csv-import/csv";
 import { payScheduleValues } from "../income";
 import type { InsightSnapshot } from "../insights/model";
+import type { ProjectionSnapshot } from "../projections/model";
+
+type ResultSnapshot = InsightSnapshot | ProjectionSnapshot;
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -230,8 +233,8 @@ export const savedResult = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    kind: text("kind").$type<InsightSnapshot["kind"]>().notNull(),
-    snapshot: jsonb("snapshot").$type<InsightSnapshot>().notNull(),
+    kind: text("kind").$type<ResultSnapshot["kind"]>().notNull(),
+    snapshot: jsonb("snapshot").$type<ResultSnapshot>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     savedAt: timestamp("saved_at", { withTimezone: true }),
   },
