@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { authClient } from "@/lib/auth/client"
 
@@ -36,7 +37,11 @@ export function SignOutButton() {
       >
         {pending ? "Signing out…" : "Sign out"}
       </Button>
-      {failed && <p role="alert">Could not sign out. Try again.</p>}
+      {failed && (
+        <Alert variant="destructive">
+          <AlertDescription>Could not sign out. Try again.</AlertDescription>
+        </Alert>
+      )}
     </div>
   )
 }

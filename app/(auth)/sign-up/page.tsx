@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   invalidSignupInviteMessage,
   isSignupInviteUsable,
@@ -22,7 +23,9 @@ export default async function SignUpPage({
       {isUsable ? (
         <CredentialsForm mode="sign-up" inviteToken={token} />
       ) : (
-        <p>{invalidSignupInviteMessage}</p>
+        <Alert variant="destructive">
+          <AlertDescription>{invalidSignupInviteMessage}</AlertDescription>
+        </Alert>
       )}
       <Link className="text-sm underline underline-offset-4" href="/sign-in">
         Sign in
