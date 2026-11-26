@@ -1,9 +1,25 @@
+import {
+  CarFrontIcon,
+  CheckIcon,
+  ChevronRightIcon,
+  EllipsisIcon,
+  HeartPulseIcon,
+  HouseIcon,
+  PlaneIcon,
+  PlugIcon,
+  ShoppingBagIcon,
+  ShoppingBasketIcon,
+  TagIcon,
+  TicketIcon,
+  UtensilsIcon,
+  XIcon,
+  type LucideIcon,
+} from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { listFinancialAccounts } from "@/app/(workspace)/financial-accounts/accounts"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
@@ -16,15 +32,57 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-import { CorrectionForm } from "./correction-form"
+import { TransactionEditor } from "./correction-form"
 import {
   categories,
   formatUsd,
   isCategorySpending,
   monthRange,
   summarizeSpending,
+  spendingKinds,
 } from "./model"
 import { listConfirmedSpending } from "./records"
+import styles from "./ledger.module.css"
+
+const categoryIcons = {
+  Uncategorized: TagIcon,
+  Groceries: ShoppingBasketIcon,
+  Dining: UtensilsIcon,
+  Housing: HouseIcon,
+  Utilities: PlugIcon,
+  Transportation: CarFrontIcon,
+  Health: HeartPulseIcon,
+  Shopping: ShoppingBagIcon,
+  Entertainment: TicketIcon,
+  Travel: PlaneIcon,
+  Other: EllipsisIcon,
+} satisfies Record<(typeof categories)[number], LucideIcon>
+
+const cashFlowLabels = {
+  inflows: "Inflows",
+  outflows: "Outflows",
+  net: "Net cash flow",
+}
+const dateFormat = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+})
+const rangeFormat = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
+})
+
+function postedDate(value: string) {
+  return new Date(`${value}T00:00:00Z`)
+}
+
+function signedUsd(cents: bigint) {
+  if (cents < 0) return `−${formatUsd(-cents)}`
+  return cents > 0 ? `+${formatUsd(cents)}` : formatUsd(cents)
+}
 
 export default async function SpendingPage({
   searchParams,
@@ -36,73 +94,81 @@ export default async function SpendingPage({
   const { month, start, end } = monthRange(query.month)
   const account = accounts.find(({ id }) => id === query.account)
   if (query.account && !account) notFound()
-
-  const included = account ? [account] : accounts
   const entries = await listConfirmedSpending(
-    included.map(({ id }) => id),
+    account ? [account.id] : accounts.map(({ id }) => id),
     start,
     end
   )
   const { inflows, outflows, net, categoryTotals } = summarizeSpending(entries)
-  const category = categories.find((value) => value === query.category)
-  const drilldown =
-    query.view === "transfers" ? "transfers" : (category ?? "all")
+  const view = query.view
+  const transfers = view === "transfers"
+  const cashFlow = view === "inflows" || view === "outflows" || view === "net"
+  const category =
+    !transfers && !cashFlow
+      ? categories.find((name) => name === query.category)
+      : undefined
+  const selection = transfers
+    ? "Internal transfers"
+    : cashFlow
+      ? cashFlowLabels[view]
+      : category
   const supporting = entries.filter((entry) => {
-    if (drilldown === "all") return true
-    if (drilldown === "transfers") return entry.kind === "transfer"
-    return entry.category === drilldown && isCategorySpending(entry)
+    if (transfers) return entry.kind === "transfer"
+    if (cashFlow) {
+      if (entry.kind === "transfer") return false
+      if (view === "inflows") return entry.amountCents > BigInt(0)
+      if (view === "outflows") return entry.amountCents < BigInt(0)
+      return entry.amountCents !== BigInt(0)
+    }
+    return (
+      !category || (entry.category === category && isCategorySpending(entry))
+    )
   })
+  const rankedCategories = Array.from(categoryTotals).sort(
+    ([, first], [, second]) => (first > second ? -1 : first < second ? 1 : 0)
+  )
 
-  function transactionLink(
-    filter?: { category: string } | { view: "transfers" }
+  function reportLink(
+    filter?:
+      | { category: string }
+      | { view: "transfers" | "inflows" | "outflows" | "net" }
   ) {
     const params = new URLSearchParams({ month, ...filter })
     if (account) params.set("account", account.id)
-    return "/spending?" + params + "#transactions"
+    return `/spending?${params}`
   }
 
   return (
-    <main className="workspace-page space-y-6">
-      <Link href="/" className="text-sm underline underline-offset-4">
-        Home
-      </Link>
-      <h1 className="text-3xl font-semibold">Monthly spending</h1>
-      <nav
-        aria-label="Related spending tools"
-        className="flex flex-wrap gap-x-4 gap-y-2"
-      >
-        <Link href="/income" className="text-sm underline underline-offset-4">
-          Compare reported and observed pay
-        </Link>
-        <Link
-          href={"/insights?month=" + month}
-          className="text-sm underline underline-offset-4"
-        >
-          Spending Insights for this month
-        </Link>
-        <Link
-          href={"/projections?month=" + month}
-          className="text-sm underline underline-offset-4"
-        >
-          Explore a savings Projection
-        </Link>
-      </nav>
-
-      <form className="flex flex-wrap items-end gap-3">
-        <div className="grid gap-1.5">
-          <Label htmlFor="month">Month</Label>
+    <main className={`workspace-page ${styles.report}`}>
+      <div className={styles.heading}>
+        <div className="min-w-0 wrap-anywhere">
+          <h1>Monthly spending</h1>
+          <p className={styles.period}>
+            {rangeFormat.formatRange(postedDate(start), postedDate(end))}
+            <span>
+              {account?.name ??
+                (accounts.length ? "All accounts" : "No financial accounts")}
+            </span>
+          </p>
+        </div>
+        <form className={styles.filters} action="/spending">
+          <Label className="sr-only" htmlFor="spending-month">
+            Month
+          </Label>
           <Input
-            id="month"
-            type="month"
+            key={month}
+            id="spending-month"
             name="month"
+            type="month"
             defaultValue={month}
             required
           />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="account">Financial account</Label>
+          <Label className="sr-only" htmlFor="spending-account">
+            Financial account
+          </Label>
           <NativeSelect
-            id="account"
+            key={account?.id ?? "all"}
+            id="spending-account"
             name="account"
             defaultValue={account?.id ?? ""}
           >
@@ -113,142 +179,256 @@ export default async function SpendingPage({
               </NativeSelectOption>
             ))}
           </NativeSelect>
-        </div>
-        <Button type="submit">Show month</Button>
-      </form>
+          <Button variant="outline" type="submit">
+            Apply
+          </Button>
+        </form>
+      </div>
 
-      <p className="text-sm text-muted-foreground">
-        {start} to {end} ·{" "}
-        {included.map(({ name }) => name).join(", ") || "No financial accounts"}
-      </p>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <dl className={styles.metrics} aria-label="Monthly cash flow">
         {(
           [
-            ["Inflows", inflows],
-            ["Outflows", outflows],
-            ["Net cash flow", net],
+            ["inflows", inflows],
+            ["outflows", -outflows],
+            ["net", net],
           ] as const
-        ).map(([title, amount]) => (
-          <Card key={title} aria-label={title}>
-            <CardHeader>
-              <CardTitle>{title}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-2xl tabular-nums">
-              {formatUsd(amount)}
-            </CardContent>
-          </Card>
+        ).map(([kind, amount]) => (
+          <div
+            key={kind}
+            data-net={
+              kind === "net" ? (net < 0 ? "negative" : "net") : undefined
+            }
+          >
+            <dt>{cashFlowLabels[kind]}</dt>
+            <dd>
+              <Link
+                href={reportLink({ view: kind }) + "#transactions"}
+                aria-current={view === kind ? "true" : undefined}
+              >
+                <span className="sr-only">
+                  {cashFlowLabels[kind]} transactions{" "}
+                </span>
+                <span>{signedUsd(amount)}</span>
+                <ChevronRightIcon aria-hidden="true" size={16} />
+              </Link>
+            </dd>
+          </div>
         ))}
-      </div>
-      <p className="text-sm text-muted-foreground">
-        Internal transfers are excluded. Refunds count as inflows and reduce
-        category spending.
-      </p>
+      </dl>
 
-      <section aria-labelledby="category-heading" className="space-y-2">
-        <h2 id="category-heading" className="text-xl font-semibold">
-          Spending by category
-        </h2>
-        {categoryTotals.size === 0 ? (
-          <p>No category spending in this period.</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-right">Net spending</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories
-                .filter((value) => categoryTotals.has(value))
-                .map((value) => (
-                  <TableRow key={value}>
-                    <TableCell>
+      <div className={styles.ledger}>
+        <section
+          className={styles.categories}
+          aria-labelledby="spending-categories"
+        >
+          <div className={styles.panelHeader}>
+            <h2 id="spending-categories">Spending by category</h2>
+          </div>
+          {rankedCategories.length ? (
+            <>
+              <div className={styles.categoryHeader} aria-hidden="true">
+                <span>Category</span>
+                <span>Net spending</span>
+              </div>
+              <ul className={styles.categoryList}>
+                {rankedCategories.map(([name, amount]) => {
+                  const selected = category === name
+                  const CategoryIcon = categoryIcons[name]
+                  return (
+                    <li key={name}>
                       <Link
-                        href={transactionLink({ category: value })}
-                        className="underline underline-offset-4"
+                        href={reportLink({ category: name }) + "#transactions"}
+                        aria-current={selected || undefined}
                       >
-                        {value}
+                        <span className={styles.categoryLabel}>
+                          <CategoryIcon size={16} aria-hidden="true" />
+                          <span>{name}</span>
+                        </span>
+                        {selected && (
+                          <CheckIcon
+                            className={styles.categoryCheck}
+                            size={14}
+                            aria-hidden="true"
+                          />
+                        )}
+                        <span className={styles.amount}>
+                          {formatUsd(amount)}
+                        </span>
                       </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </>
+          ) : (
+            <p className={styles.state}>
+              No category spending for these filters.
+            </p>
+          )}
+        </section>
+
+        <section
+          id="transactions"
+          tabIndex={-1}
+          className={styles.transactions}
+          aria-labelledby="transaction-title"
+        >
+          <div className={styles.panelHeader}>
+            <h2 id="transaction-title">Transactions</h2>
+            {selection && (
+              <Link
+                href={reportLink()}
+                scroll={false}
+                className={styles.categoryFilter}
+                aria-label={`Clear ${selection} filter`}
+              >
+                {selection} <XIcon aria-hidden="true" size={13} />
+              </Link>
+            )}
+          </div>
+          <nav className={styles.views} aria-label="Transaction views">
+            <Link
+              href={reportLink()}
+              scroll={false}
+              aria-current={!selection ? "page" : undefined}
+            >
+              All transactions
+            </Link>
+            <Link
+              href={reportLink({ view: "transfers" })}
+              scroll={false}
+              aria-current={transfers ? "page" : undefined}
+            >
+              Transfers
+            </Link>
+          </nav>
+          {supporting.length ? (
+            <Table
+              aria-label={
+                transfers
+                  ? "Internal transfers"
+                  : selection
+                    ? `${selection} transactions`
+                    : "Confirmed transactions"
+              }
+              className={styles.table}
+            >
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Posted</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className={styles.accountColumn}>
+                    Account
+                  </TableHead>
+                  <TableHead className={styles.amount}>Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {supporting.map((entry) => (
+                  <TableRow key={`${entry.importId}:${entry.sourceRow}`}>
+                    <TableCell className={styles.secondary}>
+                      <time dateTime={entry.postedDate}>
+                        {dateFormat.format(postedDate(entry.postedDate))}
+                      </time>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatUsd(categoryTotals.get(value) ?? BigInt(0))}
+                    <TableCell className={styles.description}>
+                      <span>{entry.description}</span>
+                      {(entry.kind !== "activity" || !category) && (
+                        <span className={styles.refund}>
+                          {entry.kind === "activity"
+                            ? entry.category
+                            : spendingKinds[entry.kind]}
+                        </span>
+                      )}
+                      <span className={styles.mobileAccount}>
+                        {entry.accountName}
+                      </span>
+                    </TableCell>
+                    <TableCell
+                      className={`${styles.secondary} ${styles.accountColumn}`}
+                    >
+                      {entry.accountName}
+                    </TableCell>
+                    <TableCell className={styles.amount}>
+                      <div className="flex flex-col items-end">
+                        <span>{signedUsd(entry.amountCents)}</span>
+                        <TransactionEditor
+                          importId={entry.importId}
+                          sourceRow={entry.sourceRow}
+                          description={entry.description}
+                          posted={dateFormat.format(
+                            postedDate(entry.postedDate)
+                          )}
+                          accountName={entry.accountName}
+                          amount={signedUsd(entry.amountCents)}
+                          category={entry.category}
+                          kind={entry.kind}
+                          credit={entry.amountCents > BigInt(0)}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
-            </TableBody>
-          </Table>
-        )}
-      </section>
-
-      <section
-        id="transactions"
-        aria-labelledby="transaction-heading"
-        className="space-y-3"
+              </TableBody>
+            </Table>
+          ) : (
+            <div className={styles.state}>
+              <p>
+                {selection
+                  ? "No confirmed transactions in this view."
+                  : "No confirmed transactions for these filters."}
+              </p>
+              {selection ? (
+                <Link href={reportLink()} scroll={false}>
+                  Show all transactions
+                </Link>
+              ) : accounts.length === 0 ? (
+                <Link href="/financial-accounts">Add a financial account</Link>
+              ) : account ? (
+                <Link href={`/spending?month=${month}`}>Show all accounts</Link>
+              ) : (
+                <Link href="#spending-month">Choose another month</Link>
+              )}
+            </div>
+          )}
+          {supporting.length > 0 && (
+            <div className={styles.registerFooter}>
+              <span>
+                {supporting.length}{" "}
+                {supporting.length === 1 ? "transaction" : "transactions"}
+              </span>
+              {selection && (
+                <strong className={styles.amount}>
+                  {signedUsd(
+                    supporting.reduce(
+                      (sum, entry) => sum + entry.amountCents,
+                      BigInt(0)
+                    )
+                  )}
+                </strong>
+              )}
+            </div>
+          )}
+        </section>
+      </div>
+      <p className={styles.context}>
+        Cash flow excludes internal transfers. Refunds count as inflows and
+        reduce category spending.
+      </p>
+      <nav
+        aria-label="Related spending tools"
+        className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground"
       >
-        <h2 id="transaction-heading" className="text-xl font-semibold">
-          {drilldown === "all"
-            ? "Transactions"
-            : drilldown === "transfers"
-              ? "Internal transfers"
-              : drilldown + " transactions"}
-        </h2>
-        <nav aria-label="Transaction views" className="flex gap-4 text-sm">
-          <Link
-            href={transactionLink()}
-            aria-current={drilldown === "all" ? "page" : undefined}
-            className="underline underline-offset-4"
-          >
-            All transactions
-          </Link>
-          <Link
-            href={transactionLink({ view: "transfers" })}
-            aria-current={drilldown === "transfers" ? "page" : undefined}
-            className="underline underline-offset-4"
-          >
-            Transfers
-          </Link>
-        </nav>
-        {supporting.length === 0 ? (
-          <p>No confirmed transactions in this view.</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Posted</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Account</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Correction</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {supporting.map((entry) => (
-                <TableRow key={entry.importId + ":" + entry.sourceRow}>
-                  <TableCell>{entry.postedDate}</TableCell>
-                  <TableCell className="max-w-64 break-words whitespace-normal">
-                    {entry.description}
-                  </TableCell>
-                  <TableCell>{entry.accountName}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatUsd(entry.amountCents)}
-                  </TableCell>
-                  <TableCell>
-                    <CorrectionForm
-                      key={entry.category + ":" + entry.kind}
-                      importId={entry.importId}
-                      sourceRow={entry.sourceRow}
-                      category={entry.category}
-                      kind={entry.kind}
-                      credit={entry.amountCents > BigInt(0)}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </section>
+        <Link href="/income" className="hover:underline">
+          Compare reported and observed pay
+        </Link>
+        <Link href={`/insights?month=${month}`} className="hover:underline">
+          Spending Insights
+        </Link>
+        <Link href={`/projections?month=${month}`} className="hover:underline">
+          Savings Projections
+        </Link>
+      </nav>
     </main>
   )
 }

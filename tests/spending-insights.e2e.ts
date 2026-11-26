@@ -338,8 +338,7 @@ try {
   await owner.page.getByRole("heading", { name: "Confirmed import" }).waitFor()
   await owner.page.goto("/spending?month=2026-10")
   await owner.page
-    .getByLabel("Outflows", { exact: true })
-    .getByText("$610.00")
+    .getByRole("link", { name: "Outflows transactions −$610.00", exact: true })
     .waitFor()
   assert.equal(calls.length, 3)
 

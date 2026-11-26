@@ -1,0 +1,434 @@
+.report {
+  display: grid;
+  align-content: start;
+  gap: 1.5rem;
+  container: spending-ledger / inline-size;
+}
+
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+}
+
+.period,
+.context {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.period {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-block-start: 0.5rem;
+}
+
+.period span {
+  border-inline-start: 1px solid var(--border);
+  padding-inline-start: 0.55rem;
+  font-size: 0.75rem;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filters input {
+  width: 10rem;
+}
+
+.filters :global([data-slot="native-select-wrapper"]) {
+  width: 11rem;
+}
+
+.filters select {
+  text-overflow: ellipsis;
+}
+
+.metrics,
+.ledger {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  overflow: clip;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metrics div {
+  padding: 0.875rem 1rem 0.9375rem;
+}
+
+.metrics div + div {
+  border-inline-start: 1px solid var(--border);
+}
+
+.metrics dt {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.metrics dd {
+  margin-block-start: 0.1875rem;
+  font-size: clamp(1.125rem, 3.8vw, 1.875rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.metrics div[data-net="net"] {
+  background: color-mix(in srgb, var(--selected) 38%, var(--card));
+  color: var(--financial-net);
+}
+
+.metrics div[data-net="negative"] dd {
+  color: var(--financial-negative);
+}
+
+.ledger {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.categories,
+.transactions {
+  min-width: 0;
+}
+
+.categories {
+  border-block-end: 1px solid var(--border);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-block-size: 3.75rem;
+  padding: 0.625rem 1rem;
+  border-block-end: 1px solid var(--border);
+}
+
+.panelHeader h2 {
+  font-size: 1.0625rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.categoryHeader,
+.categoryList a,
+.registerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.categoryHeader {
+  min-block-size: 2rem;
+  padding-inline: 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.categoryList {
+  padding: 0 0.5rem 0.625rem;
+  font-size: 0.875rem;
+}
+
+.categoryList li + li {
+  border-block-start: 1px solid var(--border);
+}
+
+.categoryList a {
+  min-block-size: 2.625rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+}
+
+.categoryList a:hover {
+  background: var(--muted);
+}
+
+.categoryList a[aria-current] {
+  border-color: var(--selected-border);
+  background: var(--selected);
+  color: var(--selected-foreground);
+  font-weight: 620;
+}
+
+.categoryList a svg {
+  flex: none;
+}
+
+.categoryLabel {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.5rem;
+  margin-inline-end: auto;
+  overflow-wrap: anywhere;
+}
+
+.categoryLabel svg {
+  color: var(--muted-foreground);
+}
+
+.categoryList a[aria-current] svg {
+  color: var(--selected-foreground);
+}
+
+.categoryCheck {
+  margin-inline-start: auto;
+}
+
+.categoryFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.375rem;
+  border: 1px solid var(--selected-border);
+  border-radius: var(--radius-sm);
+  background: var(--selected);
+  color: var(--selected-foreground);
+  font-size: 0.75rem;
+}
+
+.views {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-block-size: 2.375rem;
+  padding-inline: 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+.views a:hover,
+.views a[aria-current] {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.table {
+  width: 100%;
+}
+
+.table :is(th, td) {
+  padding-inline: 1rem;
+  white-space: normal;
+}
+
+.table th {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.table td {
+  padding-block: 0.6875rem;
+  vertical-align: top;
+}
+
+.table .description {
+  width: 53%;
+  font-weight: 520;
+  overflow-wrap: anywhere;
+}
+
+.description span {
+  display: block;
+}
+
+.table .amount,
+.amount {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.secondary,
+.refund,
+.mobileAccount {
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+}
+
+.refund,
+.mobileAccount {
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.description .mobileAccount {
+  display: none;
+}
+
+.registerFooter,
+.state {
+  color: var(--muted-foreground);
+  padding: 0.875rem 1rem;
+  font-size: 0.8125rem;
+}
+
+.registerFooter {
+  border-block-start: 1px solid var(--border);
+}
+
+.state a {
+  display: inline-block;
+  margin-block-start: 0.5rem;
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.registerFooter strong {
+  color: var(--foreground);
+}
+
+.context {
+  margin-block-start: -0.75rem;
+}
+
+@container spending-ledger (min-width: 52rem) {
+  .ledger {
+    grid-template-columns: minmax(14rem, 26%) minmax(0, 1fr);
+  }
+
+  .categories {
+    border-block-end: 0;
+    border-inline-end: 1px solid var(--border);
+  }
+}
+
+@container spending-ledger (max-width: 36rem) {
+  .filters {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) auto;
+  }
+
+  .filters input,
+  .filters :global([data-slot="native-select-wrapper"]) {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .metrics div {
+    padding: 0.6875rem 0.5rem;
+  }
+
+  .metrics dt {
+    font-size: 0.75rem;
+  }
+
+  .metrics dd {
+    font-size: clamp(0.875rem, 5cqi, 1.35rem);
+    white-space: nowrap;
+  }
+
+  .table :is(th, td) {
+    padding-inline: 0.625rem;
+  }
+
+  .table .accountColumn {
+    display: none;
+  }
+
+  .description .mobileAccount {
+    display: block;
+  }
+
+  .table td:first-child {
+    white-space: nowrap;
+  }
+}
+
+@container spending-ledger (max-width: 29rem) {
+  .categoryHeader {
+    display: none;
+  }
+
+  .categoryList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 0.25rem;
+    padding-block: 0.375rem;
+  }
+
+  .categoryList li + li {
+    border-block-start: 0;
+  }
+
+  .categoryList a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-content: center;
+    gap: 0.125rem 0.25rem;
+    min-block-size: 2.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .categoryList .amount {
+    grid-column: 1 / -1;
+    padding-inline-start: 1.5rem;
+    text-align: start;
+  }
+}
+
+.metrics dd a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.15rem;
+}
+
+.metrics dd a:focus-visible {
+  outline-offset: 3px;
+}
+
+.metrics dd a:hover,
+.metrics dd a[aria-current] {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.metrics dd svg {
+  flex: none;
+}
+
+@container spending-ledger (min-width: 52rem) {
+  .transactions {
+    scroll-margin-block-start: 16rem;
+  }
+}
+
+@container spending-ledger (max-width: 24rem) {
+  .metrics dd svg {
+    display: none;
+  }
+}
+
+@container spending-ledger (max-width: 20rem) {
+  .metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .metrics div + div {
+    border-inline-start: 0;
+    border-block-start: 1px solid var(--border);
+  }
+}

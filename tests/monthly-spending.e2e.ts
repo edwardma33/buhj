@@ -191,12 +191,12 @@ try {
   await owner.page.goto("/")
   await owner.page.getByRole("link", { name: "Monthly spending" }).click()
   await owner.page.getByLabel("Month", { exact: true }).fill("2026-10")
-  await owner.page.getByRole("button", { name: "Show month" }).click()
+  await owner.page.getByRole("button", { name: "Apply" }).click()
   await owner.page.waitForURL(/month=2026-10/)
 
   function row(page: Page, description: string) {
     return page.getByRole("row").filter({
-      has: page.getByRole("cell", { name: description, exact: true }),
+      has: page.getByText(description, { exact: true }),
     })
   }
 
@@ -212,28 +212,33 @@ try {
       ["Net cash flow", net],
     ]) {
       await page
-        .locator(`[aria-label="${label}"]`)
-        .getByText(amount, { exact: true })
+        .getByRole("link", {
+          name: `${label} transactions ${amount}`,
+          exact: true,
+        })
         .waitFor()
     }
   }
 
   async function correct(description: string, category: string, kind: string) {
     const transaction = row(owner.page, description)
-    await transaction.getByLabel("Category").selectOption(category)
-    await transaction.getByLabel("Type").selectOption(kind)
+    await transaction.getByRole("button", { name: /^Edit / }).click()
+    const editor = owner.page.getByRole("dialog", { name: "Edit transaction" })
+    await editor.getByLabel("Category").selectOption(category)
+    await editor.getByLabel("Type").selectOption(kind)
     const response = owner.page.waitForResponse(
       (result) =>
         result.request().method() === "POST" &&
         new URL(result.url()).pathname === "/spending"
     )
-    await transaction.getByRole("button", { name: "Save" }).click()
+    await editor.getByRole("button", { name: "Save" }).click()
     assert.equal((await response).status(), 200)
+    await editor.waitFor({ state: "hidden" })
   }
 
-  await totals(owner.page, "$1,610.33", "$162.21", "$1,448.12")
-  await row(owner.page, "Uncategorized")
-    .getByText("$162.21", { exact: true })
+  await totals(owner.page, "+$1,610.33", "−$162.21", "+$1,448.12")
+  await owner.page
+    .getByRole("link", { name: "Uncategorized $162.21", exact: true })
     .waitFor()
   assert.equal(await row(owner.page, "Unconfirmed item").count(), 0)
   assert.equal(await row(owner.page, "Guest purchase").count(), 0)
@@ -241,24 +246,49 @@ try {
 
   await correct("Card payment", "Uncategorized", "transfer")
   await correct("Card payment credit", "Uncategorized", "transfer")
-  await totals(owner.page, "$1,510.32", "$62.20", "$1,448.12")
+  await totals(owner.page, "+$1,510.32", "−$62.20", "+$1,448.12")
   await correct("Market", "Groceries", "activity")
   await correct("Market refund", "Groceries", "refund")
-  await row(owner.page, "Groceries")
-    .getByText("$49.84", { exact: true })
+  await owner.page
+    .getByRole("link", { name: "Groceries $49.84", exact: true })
     .waitFor()
-  await row(owner.page, "Uncategorized")
-    .getByText("$2.17", { exact: true })
+  await owner.page
+    .getByRole("link", { name: "Uncategorized $2.17", exact: true })
     .waitFor()
-  await totals(owner.page, "$1,510.32", "$62.20", "$1,448.12")
+  await totals(owner.page, "+$1,510.32", "−$62.20", "+$1,448.12")
+
+  await owner.page.getByRole("link", { name: /^Inflows transactions/ }).click()
+  await owner.page.getByRole("link", { name: "Clear Inflows filter" }).waitFor()
+  await row(owner.page, "Market refund").waitFor()
+  assert.equal(await row(owner.page, "Card payment credit").count(), 0)
+  assert.equal(await row(owner.page, "Bus fare").count(), 0)
+  await owner.page.getByRole("link", { name: /^Outflows transactions/ }).click()
+  await row(owner.page, "Bus fare").waitFor()
+  assert.equal(await row(owner.page, "Market refund").count(), 0)
+  assert.equal(await row(owner.page, "Card payment").count(), 0)
+  await owner.page
+    .getByRole("link", { name: /^Net cash flow transactions/ })
+    .click()
+  await owner.page
+    .getByRole("link", { name: "Clear Net cash flow filter" })
+    .waitFor()
+  await row(owner.page, "Market refund").waitFor()
+  await row(owner.page, "Bus fare").waitFor()
+  assert.equal(await row(owner.page, "Card payment").count(), 0)
+  await owner.page.getByRole("link", { name: /^Uncategorized / }).click()
+  await owner.page
+    .getByRole("table", { name: "Uncategorized transactions" })
+    .waitFor()
+  await row(owner.page, "Bus fare").waitFor()
+  assert.equal(await row(owner.page, "Card payment").count(), 0)
 
   await owner.page.getByLabel("Financial account").selectOption(card)
-  await owner.page.getByRole("button", { name: "Show month" }).click()
+  await owner.page.getByRole("button", { name: "Apply" }).click()
   await owner.page.waitForURL(new RegExp("account=" + card))
-  await totals(owner.page, "$10.19", "$62.20", "-$52.01")
-  await owner.page.getByRole("link", { name: "Groceries" }).click()
+  await totals(owner.page, "+$10.19", "−$62.20", "−$52.01")
+  await owner.page.getByRole("link", { name: /^Groceries / }).click()
   await owner.page
-    .getByRole("heading", { name: "Groceries transactions" })
+    .getByRole("table", { name: "Groceries transactions" })
     .waitFor()
   assert.equal(new URL(owner.page.url()).searchParams.get("account"), card)
   assert.equal(await row(owner.page, "Market").count(), 1)
@@ -267,40 +297,52 @@ try {
   assert.equal(await row(owner.page, "Paycheck").count(), 0)
 
   await owner.page.getByRole("link", { name: "Transfers", exact: true }).click()
-  await owner.page
-    .getByRole("heading", { name: "Internal transfers" })
-    .waitFor()
+  await owner.page.getByRole("table", { name: "Internal transfers" }).waitFor()
   await row(owner.page, "Card payment credit").waitFor()
   assert.equal(await row(owner.page, "Card payment").count(), 0)
   await correct("Card payment credit", "Uncategorized", "activity")
-  await totals(owner.page, "$110.20", "$62.20", "$48.00")
+  await totals(owner.page, "+$110.20", "−$62.20", "+$48.00")
   await owner.page
     .getByText("No confirmed transactions in this view.")
     .waitFor()
   await owner.page.reload()
-  await totals(owner.page, "$110.20", "$62.20", "$48.00")
+  await totals(owner.page, "+$110.20", "−$62.20", "+$48.00")
 
   assert.equal(
     (await guest.page.goto(spending + "&account=" + checking))?.status(),
     404
   )
   await guest.page.goto(spending)
-  await totals(guest.page, "$0.00", "$8.88", "-$8.88")
+  await totals(guest.page, "$0.00", "−$8.88", "−$8.88")
   assert.equal(await row(guest.page, "Paycheck").count(), 0)
-  const guestRow = row(guest.page, "Guest purchase")
-  await guestRow.getByLabel("Type").selectOption("transfer")
-  await guestRow
+  await row(guest.page, "Guest purchase")
+    .getByRole("button", { name: /^Edit / })
+    .click()
+  const guestEditor = guest.page.getByRole("dialog", {
+    name: "Edit transaction",
+  })
+  await guestEditor.getByLabel("Type").selectOption("transfer")
+  await guestEditor
     .locator('input[name="importId"]')
     .evaluate((input: HTMLInputElement, id) => {
       input.value = id
     }, ownerImport)
-  await guestRow.getByRole("button", { name: "Save" }).click()
-  await guestRow
+  await guestEditor.getByRole("button", { name: "Save" }).click()
+  await guestEditor
     .getByRole("alert")
     .getByText("This transaction could not be updated.")
     .waitFor()
   await owner.page.goto(spending)
-  await totals(owner.page, "$1,610.33", "$62.20", "$1,548.13")
+  await totals(owner.page, "+$1,610.33", "−$62.20", "+$1,548.13")
+  await owner.page.getByLabel("Month", { exact: true }).fill("2026-11")
+  await owner.page.getByRole("button", { name: "Apply" }).click()
+  await row(owner.page, "Next month").waitFor()
+  await totals(owner.page, "$0.00", "−$450.00", "−$450.00")
+  assert.equal(await row(owner.page, "Paycheck").count(), 0)
+  await owner.page.getByLabel("Month", { exact: true }).fill("2026-09")
+  await owner.page.getByRole("button", { name: "Apply" }).click()
+  await owner.page.getByRole("link", { name: "Choose another month" }).waitFor()
+  await totals(owner.page, "$0.00", "$0.00", "$0.00")
   console.log(
     "Monthly spending fixture, corrections, drilldown, and two-user isolation passed."
   )
@@ -373,7 +415,7 @@ try {
   await correct("Year-end bonus", "Uncategorized", "bonus")
   await correct("Expense reimbursement", "Uncategorized", "reimbursement")
   await correct("Card payment credit", "Uncategorized", "transfer")
-  await totals(owner.page, "$7,580.32", "$62.20", "$7,518.12")
+  await totals(owner.page, "+$7,580.32", "−$62.20", "+$7,518.12")
   await owner.page
     .getByRole("link", { name: "Compare reported and observed pay" })
     .click()
