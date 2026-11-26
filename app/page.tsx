@@ -26,6 +26,11 @@ export default async function Page() {
           Financial accounts
         </Link>
       </p>
+      <p>
+        <Link href="/spending" className="underline underline-offset-4">
+          Monthly spending
+        </Link>
+      </p>
       <SignOutButton />
     </main>
   )

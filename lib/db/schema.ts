@@ -198,8 +198,15 @@ export const financialTransaction = pgTable(
     amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
     category: text("category").default("Uncategorized").notNull(),
     sourceId: text("source_id"),
+    spendingKind: text("spending_kind", { enum: ["activity", "refund", "transfer"] }).default("activity").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.importId, table.sourceRow] })],
+  (table) => [
+    primaryKey({ columns: [table.importId, table.sourceRow] }),
+    check("financial_transaction_spending_kind", sql`
+      ${table.spendingKind} in ('activity', 'transfer')
+      or (${table.spendingKind} = 'refund' and ${table.amountCents} > 0)
+    `),
+  ],
 );
 
 export const aiDailyUsage = pgTable(
