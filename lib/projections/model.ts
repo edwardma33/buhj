@@ -6,6 +6,7 @@ type Schedule = keyof typeof payScheduleLabels
 export const baselineLabels = {
   reported: "Reported pay",
   observed: "Observed pay",
+  revised: "Revised pay",
 }
 
 export type PayBaseline = {
@@ -13,6 +14,7 @@ export type PayBaseline = {
   paycheckCents: string
 } & (
   | { kind: "reported" }
+  | { kind: "revised"; reviewMonth: string }
   | { kind: "observed"; sampleSize: number; latestPayday: string }
 )
 

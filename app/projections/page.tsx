@@ -1,8 +1,11 @@
 import Link from "next/link"
 
 import { requireUserId } from "@/app/financial-accounts/accounts"
-import { monthRange } from "@/app/spending/model"
+import { formatUsd, monthRange } from "@/app/spending/model"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { payScheduleLabels } from "@/lib/income"
+import { listPayDifferences } from "@/lib/pay-review/records"
+import { baselineLabels } from "@/lib/projections/model"
 import { getProjectionPay } from "@/lib/projections/pay"
 import { listSavedResults } from "@/lib/saved-results"
 
@@ -18,6 +21,10 @@ export default async function ProjectionsPage({
     listSavedResults(userId, "projection"),
   ])
   const { month } = monthRange(query.month)
+  const [review] =
+    typeof query.payReview === "string"
+      ? await listPayDifferences(userId, query.payReview)
+      : []
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-6 py-12">
@@ -34,11 +41,33 @@ export default async function ProjectionsPage({
         <CardHeader>
           <CardTitle>New Projection</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {review && (
+            <div className="space-y-1 text-sm">
+              <p>Pay review for {review.month}</p>
+              <p>
+                Expected {formatUsd(review.expectedCents)}. Confirmed{" "}
+                {formatUsd(review.confirmedCents)}.
+              </p>
+              {observed && (
+                <p>
+                  Observed pay is {formatUsd(BigInt(observed.paycheckCents))}{" "}
+                  per paycheck. {payScheduleLabels[observed.schedule]}.
+                </p>
+              )}
+            </div>
+          )}
           <ProjectionForm
-            key={month}
+            key={review?.evidence ?? month}
             month={month}
             observedAvailable={observed !== null}
+            review={
+              review && {
+                month: review.month,
+                evidence: review.evidence,
+                schedule: review.schedule,
+              }
+            }
           />
         </CardContent>
       </Card>
@@ -62,9 +91,9 @@ export default async function ProjectionsPage({
                         ? "Savings target"
                         : "Spending change"}{" "}
                       ·{" "}
-                      {baselineKind === "observed"
-                        ? "Observed pay"
-                        : "Reported pay"}{" "}
+                      {baselineKind === "observed" || baselineKind === "revised"
+                        ? baselineLabels[baselineKind]
+                        : baselineLabels.reported}{" "}
                       · {sourcePeriod.start} to {sourcePeriod.end}
                     </Link>
                     {savedAt && (

@@ -8,6 +8,7 @@ import { chromium, type Page } from "playwright"
 import { createSignupInvite } from "../lib/auth/signup-invites"
 import { db, pool } from "../lib/db"
 import {
+  aiDailyUsage,
   csvImport,
   financialAccount,
   financialTransaction,
@@ -419,6 +420,190 @@ try {
   await alert(guest.page, "Buhj reached its daily AI limit")
   assert.equal(calls.length, 6)
 
+  await db.delete(aiDailyUsage)
+  const october = "2026-10"
+  await seed(owner.account, [
+    { ...groceries, postedDate: "2026-10-01" },
+    { ...deposit, postedDate: "2026-10-30", amountCents: 290_123 },
+    { ...groceries, postedDate: "2026-10-31" },
+  ])
+  await seed(
+    owner.account,
+    [{ ...deposit, postedDate: "2026-10-30", amountCents: 987_654 }],
+    false
+  )
+  await seed(guest.account, [
+    { ...deposit, postedDate: "2026-10-30", amountCents: 88_800 },
+  ])
+
+  const dashboard = owner.page
+  const keep = dashboard.getByRole("button", { name: "Keep forecast" })
+  const review = dashboard.getByRole("link", { name: "Review forecast" })
+  await dashboard.goto("/")
+  assert.equal(
+    await review.count(),
+    0,
+    "Row date extrema cannot prove import coverage"
+  )
+
+  async function setUpMonth(
+    page: Page,
+    month: string,
+    dates: string,
+    full: boolean
+  ) {
+    const disclosure = page.getByText("Set up a completed-month pay comparison")
+    if (!(await page.getByLabel("Completed month").isVisible()))
+      await disclosure.click()
+    await page.getByLabel("Completed month").fill(month)
+    await page.getByLabel("Expected paydays").fill(dates)
+    await page.getByRole("checkbox").setChecked(full)
+    await Promise.all([
+      page.waitForResponse(
+        (response) => response.request().method() === "POST"
+      ),
+      page.getByRole("button", { name: "Save month setup" }).click(),
+    ])
+  }
+
+  await setUpMonth(dashboard, october, "2026-10-30", false)
+  await dashboard
+    .getByRole("status")
+    .filter({ hasText: "Month setup saved" })
+    .waitFor()
+  await dashboard.reload()
+  assert.equal(
+    await review.count(),
+    0,
+    "Partial coverage leaves the prompt hidden"
+  )
+  await setUpMonth(dashboard, october, "", true)
+  await alert(dashboard, "Enter each expected payday")
+  assert.equal(
+    await review.count(),
+    0,
+    "Unknown expected paydays leave the prompt hidden"
+  )
+
+  await setUpMonth(dashboard, october, "2026-10-30", true)
+  await dashboard.getByText("Pay difference for 2026-10").waitFor()
+  await dashboard.getByText("$3,000.00", { exact: true }).waitFor()
+  await dashboard.getByText("$2,901.23", { exact: true }).waitFor()
+  await guest.page.goto("/")
+  assert.equal(
+    await guest.page.getByRole("link", { name: "Review forecast" }).count(),
+    0
+  )
+  await guest.page.goto("/projections?month=2026-10&payReview=2026-10")
+  assert.equal(
+    await guest.page.getByRole("option", { name: "Revised pay" }).count(),
+    0
+  )
+
+  await keep.click()
+  await review.waitFor({ state: "hidden" })
+  await dashboard.reload()
+  assert.equal(
+    await review.count(),
+    0,
+    "Dismissal persists for the same evidence"
+  )
+  await seed(owner.account, [
+    { ...deposit, postedDate: "2026-10-31", amountCents: 1_234 },
+  ])
+  await dashboard.reload()
+  await dashboard.getByText("$2,913.57", { exact: true }).waitFor()
+
+  await review.click()
+  await dashboard.getByText("Pay review for 2026-10").waitFor()
+  await dashboard.getByLabel("Pay baseline").selectOption("revised")
+  await dashboard.getByLabel("Take-home pay per paycheck (USD)").fill("2913.57")
+  await target(dashboard)
+  await generate(dashboard)
+  await dashboard.waitForURL(/\/projections\/[0-9a-f-]+$/)
+  await dashboard
+    .getByText("Revised pay · $2,913.57 per paycheck · Monthly")
+    .waitFor()
+  await dashboard.getByRole("button", { name: "Save Projection" }).click()
+  await dashboard.getByRole("heading", { name: "Saved Projection" }).waitFor()
+  const revisedPath = new URL(dashboard.url()).pathname
+  const revised = await dashboard.locator("main").innerText()
+  assert.equal((await guest.page.goto(revisedPath))?.status(), 404)
+  await dashboard.goto(path)
+  assert.equal(await dashboard.locator("main").innerText(), original)
+  await dashboard.goto(revisedPath)
+  assert.equal(await dashboard.locator("main").innerText(), revised)
+  await dashboard.goto("/income")
+  assert.equal(
+    await dashboard.getByLabel(/Take-home pay per paycheck/).inputValue(),
+    "3000.00"
+  )
+
+  const threePaycheckUser = await signUp("ThreePaycheckOwner")
+  await db
+    .update(incomeProfile)
+    .set({
+      paySchedule: "biweekly",
+      takeHomePerPaycheckCents: 75_000,
+    })
+    .where(eq(incomeProfile.userId, threePaycheckUser.userId))
+  const expectedDates = ["2026-08-01", "2026-08-15", "2026-08-29"]
+  await seed(
+    threePaycheckUser.account,
+    expectedDates.map((postedDate) => ({ ...deposit, postedDate }))
+  )
+  await threePaycheckUser.page.goto("/")
+  await setUpMonth(
+    threePaycheckUser.page,
+    "2026-08",
+    expectedDates.join("\n"),
+    true
+  )
+  await threePaycheckUser.page
+    .getByRole("status")
+    .filter({ hasText: "Month setup saved" })
+    .waitFor()
+  await threePaycheckUser.page.reload()
+  assert.equal(
+    await threePaycheckUser.page
+      .getByRole("link", { name: "Review forecast" })
+      .count(),
+    0,
+    "A matching scheduled three-paycheck month leaves the prompt hidden"
+  )
+  await db
+    .update(incomeProfile)
+    .set({ takeHomePerPaycheckCents: 80_000 })
+    .where(eq(incomeProfile.userId, threePaycheckUser.userId))
+  await seed(threePaycheckUser.account, [
+    { ...groceries, postedDate: "2026-08-03" },
+  ])
+  await threePaycheckUser.page.reload()
+  await threePaycheckUser.page.getByText("$2,400.00", { exact: true }).waitFor()
+  await threePaycheckUser.page.getByText("$2,250.00", { exact: true }).waitFor()
+  await threePaycheckUser.page
+    .getByRole("link", { name: "Review forecast" })
+    .click()
+  await threePaycheckUser.page.getByText("Pay review for 2026-08").waitFor()
+  assert.equal(
+    await threePaycheckUser.page.getByLabel("Pay baseline").inputValue(),
+    "observed"
+  )
+  await target(threePaycheckUser.page)
+  await generate(threePaycheckUser.page)
+  await threePaycheckUser.page.waitForURL(/\/projections\/[0-9a-f-]+$/)
+  await threePaycheckUser.page
+    .getByText("Observed pay · $750.00 per paycheck · Every two weeks")
+    .waitFor()
+  assert.equal(
+    calls.length,
+    8,
+    "Only the two new Projections call the provider during review"
+  )
+
+  console.log(
+    "Pay review E2E passed for coverage, exact totals, three paychecks, dismissal, changed evidence, revised pay, saved results, and owner isolation."
+  )
   console.log(
     "Projection E2E passed: baseline availability, arithmetic, citations, snapshots, ownership, and quotas."
   )
