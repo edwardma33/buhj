@@ -18,6 +18,7 @@ import {
 
 import type { PreviewRow } from "../csv-import/csv";
 import { payScheduleValues } from "../income";
+import type { InsightSnapshot } from "../insights/model";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -220,4 +221,27 @@ export const aiDailyUsage = pgTable(
     requests: integer("requests").notNull(),
   },
   (table) => [primaryKey({ columns: [table.day, table.bucket] })],
+);
+
+export const savedResult = pgTable(
+  "saved_result",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<InsightSnapshot["kind"]>().notNull(),
+    snapshot: jsonb("snapshot").$type<InsightSnapshot>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    savedAt: timestamp("saved_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("saved_result_owner_kind_saved_idx")
+      .on(table.userId, table.kind, table.savedAt)
+      .where(sql`${table.savedAt} is not null`),
+    index("saved_result_draft_created_idx")
+      .on(table.createdAt)
+      .where(sql`${table.savedAt} is null`),
+    check("saved_result_snapshot_kind", sql`${table.snapshot}->>'kind' is not distinct from ${table.kind}`),
+  ],
 );
