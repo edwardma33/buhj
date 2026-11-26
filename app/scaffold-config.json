@@ -1,0 +1,11 @@
+{
+  "name": "buhj",
+  "database": "postgresql",
+  "organizations": false,
+  "resend": false,
+  "polar": false,
+  "setup": [
+    "Set DATABASE_URL in .env, then run bun run db:migrate.",
+    "For Google sign-in, set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env."
+  ]
+}
