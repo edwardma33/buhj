@@ -1,6 +1,8 @@
 import assert from "node:assert/strict"
-import { randomUUID } from "node:crypto"
+import { execFile } from "node:child_process"
+import { createHash, randomUUID } from "node:crypto"
 import { after, test } from "node:test"
+import { promisify } from "node:util"
 
 import { createSignupInvite } from "../lib/auth/signup-invites"
 import { pool } from "../lib/db"
@@ -90,9 +92,34 @@ test("redirects signed-out visits and rejects a fake session cookie", async () =
   }
 })
 
-test("redeems a link and reaches the private app after signup and a fresh sign-in", async () => {
-  const inviteToken = await newInvite()
-  const signupPage = await invitePage(inviteToken)
+test("issues a link, redeems it once, and reaches the private app after a fresh sign-in", async () => {
+  const beforeIssue = Date.now()
+  const { stdout } = await promisify(execFile)(process.execPath, [
+    "run",
+    "invite:create",
+    "--hours",
+    "1",
+  ])
+  const signupUrl = new URL(stdout.trim())
+  assert.equal(signupUrl.origin, origin.origin)
+  assert.equal(signupUrl.pathname, "/sign-up")
+  const inviteToken = signupUrl.searchParams.get("invite")
+  assert.ok(inviteToken)
+
+  const hash = createHash("sha256").update(inviteToken).digest("hex")
+  const { rows } = await pool.query<{ token_hash: string; expires_at: Date }>(
+    "SELECT token_hash, expires_at FROM signup_invite WHERE token_hash = ANY($1)",
+    [[hash, inviteToken]]
+  )
+  assert.deepEqual(
+    rows.map((row) => row.token_hash),
+    [hash]
+  )
+  const expiresAt = rows[0].expires_at.getTime()
+  assert.ok(expiresAt >= beforeIssue + 3_600_000)
+  assert.ok(expiresAt <= Date.now() + 3_600_000)
+
+  const signupPage = await fetch(signupUrl)
   assert.equal(signupPage.status, 200)
   assert.match(await signupPage.text(), /Create account/)
 
@@ -101,6 +128,10 @@ test("redeems a link and reaches the private app after signup and a fresh sign-i
   assert.equal(signup.status, 200)
   const cookie = sessionCookie(signup)
   await assertSignedIn(cookie, email)
+
+  const replay = await signUp(emailFor("issued-link-replay"), inviteToken)
+  assert.equal(replay.status, 400)
+  assert.equal((await replay.json()).code, "INVALID_SIGNUP_INVITE")
 
   const signout = await post("/sign-out", {}, cookie)
   assert.equal(signout.status, 200)

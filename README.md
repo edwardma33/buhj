@@ -20,6 +20,20 @@ To use the components in your app, import them as follows:
 import { Button } from "@/components/ui/button";
 ```
 
+## Create a signup invite
+
+In your local environment, set `DATABASE_URL` to the app's Postgres connection
+string and `BETTER_AUTH_URL` to the app URL your invitee can open. Keep the
+database connection string private. Apply the database migrations before you
+create the first invite.
+
+```bash
+bun run invite:create --hours 24
+```
+
+Share the printed URL with the invitee. `--hours` sets the link's lifetime in
+whole hours. The link expires after that time or after one successful signup.
+
 ## Verify invite signup
 
 Create a disposable local PostgreSQL database named `buhj_auth_test`. Set
