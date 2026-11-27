@@ -22,7 +22,7 @@ export function PayReviewForm({ latestMonth }: { latestMonth: string }) {
     <form
       action={action}
       onReset={(event) => event.preventDefault()}
-      className="space-y-4"
+      className="flex max-w-lg flex-col gap-4 pt-1 pb-4"
     >
       <div className="grid gap-1.5">
         <Label htmlFor="review-month">Completed month</Label>
@@ -30,27 +30,18 @@ export function PayReviewForm({ latestMonth }: { latestMonth: string }) {
           id="review-month"
           name="month"
           type="month"
+          className="max-w-56"
           max={latestMonth}
           value={month}
           onChange={(event) => setMonth(event.target.value)}
           required
         />
       </div>
-      <div className="flex items-start gap-2">
-        <Checkbox
-          id="pay-coverage"
-          name="coverage"
-          value="full"
-          checked={fullCoverage}
-          onCheckedChange={setFullCoverage}
-        />
-        <Label htmlFor="pay-coverage">
-          I imported the full month for every account that receives my regular
-          pay.
-        </Label>
-      </div>
       <div className="grid gap-1.5">
         <Label htmlFor="expected-dates">Expected paydays</Label>
+        <p id="expected-dates-hint" className="text-xs text-muted-foreground">
+          Use YYYY-MM-DD, one scheduled payday per line.
+        </p>
         <Textarea
           id="expected-dates"
           name="expectedDates"
@@ -59,20 +50,42 @@ export function PayReviewForm({ latestMonth }: { latestMonth: string }) {
           onChange={(event) => setDates(event.target.value)}
           aria-describedby="expected-dates-hint"
         />
-        <p id="expected-dates-hint" className="text-sm text-muted-foreground">
-          Mark regular deposits in{" "}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="pay-coverage"
+            name="coverage"
+            value="full"
+            checked={fullCoverage}
+            onCheckedChange={setFullCoverage}
+            aria-describedby="pay-coverage-hint"
+          />
+          <Label htmlFor="pay-coverage" className="leading-snug">
+            I imported the full month for every account that receives my regular
+            pay.
+          </Label>
+        </div>
+        <p id="pay-coverage-hint" className="text-xs text-muted-foreground">
+          Leave unchecked if coverage is partial or uncertain.{" "}
           <Link
-            href="/spending#transactions"
+            href={
+              (month ? "/spending?month=" + month : "/spending") +
+              "#transactions"
+            }
             className="underline underline-offset-4"
           >
-            Monthly spending
+            Mark regular pay in Monthly spending
           </Link>
-          . Enter each date from your pay schedule as YYYY-MM-DD, one per line.
-          Leave coverage unchecked to mark the month partial or unknown.
+          .
         </p>
       </div>
-      <Button type="submit" disabled={pending}>
-        Save month setup
+      <Button
+        type="submit"
+        disabled={pending}
+        className="self-start max-sm:min-h-10"
+      >
+        {pending ? "Saving…" : "Save month setup"}
       </Button>
       {status?.kind === "error" && (
         <Alert variant="destructive">

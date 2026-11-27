@@ -66,17 +66,27 @@ export async function recordPayReviewMonth(
   return { kind: "saved" }
 }
 
-export async function keepForecast(month: string, evidence: string) {
-  const userId = await requireUserId()
-  const range = completedMonth(month)
-  if (!range) return
+type KeepForecastStatus = { kind: "stale" } | { kind: "kept"; month: string }
 
-  const [current] = await listPayDifferences(userId, month)
-  if (current?.evidence === evidence) {
-    await db
-      .insert(payReviewDismissal)
-      .values({ userId, monthStart: range.start, evidence })
-      .onConflictDoNothing()
+export async function keepForecast(
+  _previous: KeepForecastStatus | null,
+  form: FormData
+): Promise<KeepForecastStatus> {
+  const userId = await requireUserId()
+  const range = completedMonth(form.get("month"))
+  const evidence = form.get("evidence")
+  if (!range || typeof evidence !== "string") return { kind: "stale" }
+
+  const [current] = await listPayDifferences(userId, range.month)
+  if (current?.evidence !== evidence) {
+    revalidatePath("/")
+    return { kind: "stale" }
   }
+
+  await db
+    .insert(payReviewDismissal)
+    .values({ userId, monthStart: range.start, evidence })
+    .onConflictDoNothing()
   revalidatePath("/")
+  return { kind: "kept", month: range.month }
 }
