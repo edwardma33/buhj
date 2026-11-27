@@ -39,7 +39,7 @@ export async function saveIncome(
 
   const errors: NonNullable<IncomeFormState["errors"]> = {}
   const amountError =
-    "Enter a positive USD amount with up to 12 digits before the decimal and 2 after it."
+    "Enter a positive amount with up to 12 digits before the decimal and 2 after it. Leave out commas and the dollar sign."
   const validTitle =
     jobTitle.length > 0 &&
     jobTitle.length <= jobTitleMaxLength &&
