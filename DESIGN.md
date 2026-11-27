@@ -196,6 +196,15 @@ Keep the shell in place during workspace navigation and loading. After authoriza
 
 Place errors near the action or section that failed. Name what failed and give the next recovery step. Offer a retry when repeating the operation can help, and preserve entered values when possible.
 
+### Generated reports
+
+Spending Insights establishes these presentation patterns for Savings Projections (MAD-168).
+
+- Put the inputs and generate action first. Keep pending feedback, actionable errors, and any provider disclosure with the form. Preserve the inputs so the user can retry.
+- Put saved results in a separate list. Each row opens the report and shows its source scope and save time. Drafts stay out of this list.
+- Give a draft and its saved result the same detail layout. Lead with the source scope, show **Draft** or **Saved** in text, and put the save action in the draft header. Show the save time on the saved result.
+- Keep generated explanations next to the saved evidence that supports them. Reopening the report shows the original inputs, evidence, and explanation. On narrow screens, put the evidence immediately above its explanation.
+
 ## Do's and Don'ts
 
 - **Do** check light and dark rendering, keyboard focus, and narrow layouts when adding a shared component or page.
