@@ -19,11 +19,26 @@ import {
 import { explainSpending } from "@/lib/insights/provider"
 import { createResultDraft, saveResultDraft } from "@/lib/saved-results"
 
-export async function generateInsight(_previous: string, formData: FormData) {
+type GenerationFeedback = {
+  kind: "invalid-month" | "insufficient" | "limit" | "provider"
+  title: string
+  description: string
+}
+
+export async function generateInsight(
+  _previous: GenerationFeedback | null,
+  formData: FormData
+): Promise<GenerationFeedback> {
   const userId = await requireUserId()
   const requestedMonth = formData.get("month")
   const { month, start, end } = monthRange(requestedMonth)
-  if (month !== requestedMonth) return "Choose a valid month."
+  if (month !== requestedMonth) {
+    return {
+      kind: "invalid-month",
+      title: "Choose a valid month",
+      description: "Enter a month and year, then try again.",
+    }
+  }
 
   const accounts = await listFinancialAccounts()
   const entries = await listConfirmedSpending(
@@ -33,20 +48,36 @@ export async function generateInsight(_previous: string, formData: FormData) {
   )
   const evidence = summarizeInsight({ start, end }, entries)
   if (!evidence.values.categories.some(supportsSuggestion)) {
-    return "There is too little spending evidence for this month. Choose another month or confirm more transactions."
+    return {
+      kind: "insufficient",
+      title: "Too little spending evidence",
+      description:
+        "Choose another month or confirm more transactions. A category needs purchases on at least two dates and positive net spending.",
+    }
   }
 
   const capped = await reserveAiRequest(userId)
-  if (capped === "user")
-    return "You reached your daily AI limit. Try again tomorrow (UTC)."
-  if (capped === "app")
-    return "Buhj reached its daily AI limit. Try again tomorrow (UTC)."
+  if (capped) {
+    return {
+      kind: "limit",
+      title:
+        capped === "user"
+          ? "You reached your daily AI limit"
+          : "Buhj reached its daily AI limit",
+      description:
+        "Try again after midnight UTC. You can still open saved Insights.",
+    }
+  }
 
   let explanation: InsightSnapshot["explanation"]
   try {
     explanation = await explainSpending(evidence.values.categories)
   } catch {
-    return "Buhj could not generate an Insight right now. Try again later."
+    return {
+      kind: "provider",
+      title: "Buhj could not generate an Insight",
+      description: "Try again in a moment. Your month selection is still here.",
+    }
   }
 
   const id = await createResultDraft(userId, {

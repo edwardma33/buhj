@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import { randomUUID } from "node:crypto"
+import { join } from "node:path"
 import { setTimeout } from "node:timers/promises"
 
 import { eq } from "drizzle-orm"
@@ -22,11 +23,70 @@ const origin = "http://127.0.0.1:34156"
 const fakeKey = "synthetic-insight-provider-key"
 const cronSecret = randomUUID()
 const advice =
-  "Check which grocery purchases you could replace with lower-cost staples."
+  "Plan your next grocery trip around the meals you already have ingredients for. List the staples you buy most often and compare unit prices on those items first. After a few shopping trips, check what you used and what you still have before buying more."
 const calls: unknown[] = []
+const pendingResponse = Promise.withResolvers<void>()
 let responseMode: "failure" | "insight" | "mapping" = "failure"
+let holdResponse = false
 
 const browser = await chromium.launch()
+const evidenceDir = process.env.INSIGHTS_SCREENSHOT_DIR
+const desktopViewport = { width: 1280, height: 900 }
+const mobileViewport = { width: 390, height: 844 }
+
+async function screenshot(page: Page, state: string) {
+  if (!evidenceDir) return
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.screenshot({
+    path: join(evidenceDir, state + ".png"),
+    fullPage: true,
+    animations: "disabled",
+    caret: "initial",
+    style: "nextjs-portal { display: none !important; }",
+  })
+}
+
+async function assertNoHorizontalOverflow(page: Page) {
+  const { scroll, viewport } = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollWidth,
+    viewport: document.documentElement.clientWidth,
+  }))
+  assert.ok(
+    scroll <= viewport,
+    `Page is ${scroll}px wide in a ${viewport}px viewport`
+  )
+}
+
+async function tabTo(page: Page, selector: string) {
+  await page.keyboard.press("Tab")
+  // Chromium tabs through the individual segments of a native month input.
+  for (
+    let segment = 0;
+    selector !== "#insight-month" && segment < 3;
+    segment++
+  ) {
+    if (
+      !(await page.evaluate(
+        () => document.activeElement?.id === "insight-month"
+      ))
+    )
+      break
+    await page.keyboard.press("Tab")
+  }
+  const focus = await page.evaluate(
+    (target) => ({
+      matched: document.activeElement?.matches(target),
+      element: document.activeElement?.outerHTML.split(">")[0],
+    }),
+    selector
+  )
+  assert.equal(
+    focus.matched,
+    true,
+    `Expected keyboard focus on ${selector}, got ${focus.element}`
+  )
+}
+
 const provider = Bun.serve({
   hostname: "127.0.0.1",
   port: 0,
@@ -48,6 +108,7 @@ const provider = Bun.serve({
     if (responseMode === "failure") {
       return new Response("private provider diagnostic", { status: 502 })
     }
+    if (holdResponse) await pendingResponse.promise
     const output =
       responseMode === "insight"
         ? { suggestions: [{ category: "Groceries", advice }] }
@@ -119,7 +180,11 @@ try {
   }
 
   async function signUp(name: string) {
-    const context = await browser.newContext({ baseURL: origin })
+    const context = await browser.newContext({
+      baseURL: origin,
+      viewport: desktopViewport,
+      colorScheme: "light",
+    })
     context.setDefaultTimeout(12_000)
     const response = await fetch(origin + "/api/auth/sign-up/email", {
       method: "POST",
@@ -232,6 +297,12 @@ try {
     },
     { postedDate: "2026-10-18", description: "Deposit", amountCents: 25_000 },
     {
+      postedDate: "2026-10-19",
+      description: "One dining purchase",
+      amountCents: -2_599,
+      category: "Dining",
+    },
+    {
       postedDate: "2026-09-12",
       description: "Single purchase",
       amountCents: -1_000,
@@ -258,22 +329,44 @@ try {
   )
   await seed(
     guest.account,
-    groceries.map((row) => ({ ...row, amountCents: -20_000 }))
+    groceries.map((row) => ({ ...row, amountCents: -2_000_000_000 }))
   )
 
-  await generate(owner.page, "2026-09")
+  await owner.page.goto("/insights?month=2026-09")
+  await owner.page.getByText("No saved Insights yet", { exact: true }).waitFor()
+  await screenshot(owner.page, "desktop-light-empty")
+  await tabTo(owner.page, ".workspace-skip-link")
+  await owner.page.keyboard.press("Enter")
+  await tabTo(owner.page, "#insight-month")
+  await tabTo(owner.page, "main button[type=submit]")
+  assert.equal(
+    await owner.page
+      .getByRole("button", { name: "Generate Insight" })
+      .evaluate((button) => getComputedStyle(button).outlineStyle),
+    "solid"
+  )
+  await owner.page.keyboard.press("Enter")
   await owner.page
     .getByRole("alert")
-    .filter({ hasText: "too little spending evidence" })
+    .filter({ hasText: "Too little spending evidence" })
     .waitFor()
   assert.equal(calls.length, 0)
+  await screenshot(owner.page, "desktop-light-insufficient")
 
-  await generate(owner.page)
+  const monthInput = owner.page.getByLabel("Month")
+  await monthInput.fill("2026-10")
+  await owner.page
+    .locator("main")
+    .getByRole("alert")
+    .waitFor({ state: "hidden" })
+  await owner.page.getByRole("button", { name: "Generate Insight" }).click()
   await owner.page
     .getByRole("alert")
     .filter({ hasText: "could not generate an Insight" })
     .waitFor()
   assert.equal(calls.length, 1)
+  assert.equal(await monthInput.inputValue(), "2026-10")
+  await screenshot(owner.page, "desktop-light-provider-error")
   assert.ok(!(await owner.page.locator("body").innerText()).includes(fakeKey))
   assert.ok(
     !(await owner.page.locator("body").innerText()).includes(
@@ -282,7 +375,25 @@ try {
   )
 
   responseMode = "insight"
-  await generate(owner.page)
+  holdResponse = true
+  await owner.page.getByRole("button", { name: "Generate Insight" }).click()
+  await owner.page
+    .getByRole("status")
+    .filter({ hasText: "Generating Insight…" })
+    .waitFor()
+  assert.ok(
+    await owner.page
+      .getByRole("button", { name: "Generate Insight" })
+      .isDisabled()
+  )
+  assert.equal(await monthInput.getAttribute("readonly"), "")
+  await owner.page
+    .locator("main")
+    .getByRole("alert")
+    .waitFor({ state: "hidden" })
+  await screenshot(owner.page, "desktop-light-pending")
+  holdResponse = false
+  pendingResponse.resolve()
   await owner.page.waitForURL(/\/insights\/[0-9a-f-]+$/)
   const insightPath = new URL(owner.page.url()).pathname
   const id = insightPath.split("/").at(-1)!
@@ -293,28 +404,53 @@ try {
     prompt,
     /2026-10|Private merchant|Owner account|270\.00|50,?000/
   )
-  await owner.page.getByText("Source period 2026-10-01 to 2026-10-31").waitFor()
+  const octoberHeading = owner.page.getByRole("heading", {
+    name: "October 2026 Insight",
+    exact: true,
+  })
+  await octoberHeading.waitFor()
+  await owner.page.getByText(/Oct 1.*31, 2026/).waitFor()
   await owner.page
-    .getByText(
-      "4 confirmed transactions from 2026-10-03 to 2026-10-18, excluding transfers."
-    )
+    .getByText(/5 confirmed transactions across all accounts/)
     .waitFor()
   await owner.page.getByText("$270.00", { exact: true }).waitFor()
-  await owner.page.getByText("$110.00", { exact: true }).waitFor()
-  await owner.page.getByText("$160.00", { exact: true }).waitFor()
-  await owner.page
-    .getByText("$90.00 net spending. 2 purchases on 2 dates.")
+  await owner.page.getByText("$135.99", { exact: true }).waitFor()
+  await owner.page.getByText("$134.01", { exact: true }).waitFor()
+  const suggestions = owner.page.getByRole("region", { name: "Suggestions" })
+  const grocerySuggestion = suggestions
+    .getByRole("listitem")
+    .filter({ hasText: "Groceries" })
+  await grocerySuggestion.getByText("$90.00", { exact: true }).waitFor()
+  await grocerySuggestion
+    .getByText("2 purchases on 2 dates", { exact: true })
     .waitFor()
-  await owner.page.getByText(advice, { exact: true }).waitFor()
+  await grocerySuggestion.getByText(advice, { exact: true }).waitFor()
+  const other = owner.page.getByRole("region", {
+    name: "Other category evidence",
+  })
+  await other.getByText("Dining", { exact: true }).waitFor()
+  await other.getByText(/\$25\.99/).waitFor()
   assert.equal((await guest.page.goto(insightPath))?.status(), 404)
+  await owner.page.getByText("Draft", { exact: true }).waitFor()
+  await screenshot(owner.page, "desktop-light-draft")
 
-  const draft = await owner.page.context().newPage()
-  await draft.goto("/insights")
-  await draft.getByText("No saved Insights yet.").waitFor()
-  await owner.page.getByRole("button", { name: "Save Insight" }).click()
-  await owner.page
-    .getByRole("heading", { name: "Saved Insight", exact: true })
-    .waitFor()
+  const indexPage = await owner.page.context().newPage()
+  await indexPage.goto("/insights")
+  await indexPage.getByText("No saved Insights yet", { exact: true }).waitFor()
+  await indexPage.close()
+  await owner.page.goto(insightPath)
+  await octoberHeading.waitFor()
+  await tabTo(owner.page, ".workspace-skip-link")
+  await owner.page.keyboard.press("Enter")
+  await tabTo(owner.page, 'main a[href="/insights?month=2026-10"]')
+  await tabTo(owner.page, "main button[type=submit]")
+  await owner.page.keyboard.press("Enter")
+  await owner.page.getByText("Saved", { exact: true }).waitFor()
+  assert.equal(
+    await owner.page.getByRole("button", { name: "Save Insight" }).count(),
+    0
+  )
+  await screenshot(owner.page, "desktop-light-saved")
   const original = await owner.page.locator("main").innerText()
   const [saved] = await db
     .select()
@@ -338,33 +474,66 @@ try {
   await owner.page.getByRole("heading", { name: "Confirmed import" }).waitFor()
   await owner.page.goto("/spending?month=2026-10")
   await owner.page
-    .getByRole("link", { name: "Outflows transactions −$610.00", exact: true })
+    .getByRole("link", { name: "Outflows transactions −$635.99", exact: true })
     .waitFor()
   assert.equal(calls.length, 3)
 
   await owner.page.goto("/insights")
-  await owner.page
-    .getByRole("link", { name: "2026-10-01 to 2026-10-31" })
-    .click()
-  await owner.page
-    .getByRole("heading", { name: "Saved Insight", exact: true })
-    .waitFor()
+  const octoberLink = owner.page.getByRole("link", {
+    name: /October 2026 Saved/,
+  })
+  await octoberLink.waitFor()
+  await screenshot(owner.page, "desktop-light-list")
+  await owner.page.getByRole("button", { name: "Appearance" }).click()
+  await owner.page.getByRole("menuitemradio", { name: "Dark" }).click()
+  await owner.page.locator("html.dark").waitFor()
+  await screenshot(owner.page, "desktop-dark-list")
+  await owner.page.getByRole("button", { name: "Generate Insight" }).focus()
+  await tabTo(owner.page, `main a[href="${insightPath}"]`)
+  await owner.page.keyboard.press("Enter")
+  await octoberHeading.waitFor()
+  await owner.page.getByText("Saved", { exact: true }).waitFor()
   assert.equal(await owner.page.locator("main").innerText(), original)
   assert.equal(calls.length, 3)
+  await assertNoHorizontalOverflow(owner.page)
+  await screenshot(owner.page, "desktop-dark-saved")
+  await owner.page.setViewportSize(mobileViewport)
+  await assertNoHorizontalOverflow(owner.page)
+  await screenshot(owner.page, "mobile-dark-saved")
+  await owner.page.setViewportSize(desktopViewport)
+  await owner.page.getByRole("button", { name: "Appearance" }).click()
+  await owner.page.getByRole("menuitemradio", { name: "Light" }).click()
+  await owner.page.locator("html.light").waitFor()
   await generate(owner.page)
   await owner.page
     .getByRole("alert")
     .filter({ hasText: "You reached your daily AI limit" })
     .waitFor()
   assert.equal(calls.length, 3)
+  await screenshot(owner.page, "desktop-light-limit")
 
   responseMode = "insight"
   await generate(guest.page)
   await guest.page.waitForURL(/\/insights\/[0-9a-f-]+$/)
   const guestPath = new URL(guest.page.url()).pathname
   await guest.page
-    .getByText("$400.00 net spending. 2 purchases on 2 dates.")
+    .getByText("$40,000,000.00", { exact: true })
+    .first()
     .waitFor()
+  await guest.page.setViewportSize(mobileViewport)
+  await assertNoHorizontalOverflow(guest.page)
+  await screenshot(guest.page, "mobile-light-draft")
+  await guest.page.emulateMedia({ colorScheme: "dark" })
+  await guest.page.locator("html.dark").waitFor()
+  await assertNoHorizontalOverflow(guest.page)
+  await screenshot(guest.page, "mobile-dark-draft")
+  await guest.page.getByRole("link", { name: "Spending Insights" }).click()
+  await guest.page.waitForURL("**/insights?month=2026-10")
+  assert.equal(await guest.page.getByLabel("Month").inputValue(), "2026-10")
+  await assertNoHorizontalOverflow(guest.page)
+  await screenshot(guest.page, "mobile-dark-empty")
+  await guest.page.goto(guestPath)
+  await guest.page.getByText("Draft", { exact: true }).waitFor()
   await guest.page
     .locator('input[name="id"]')
     .evaluate((input, otherId) => input.setAttribute("value", otherId), id)
@@ -411,6 +580,7 @@ try {
     "Spending Insights passed with confirmed evidence, immutable saves, private drafts, and shared AI limits."
   )
 } finally {
+  pendingResponse.resolve()
   await browser.close()
   server.kill()
   provider.stop(true)
