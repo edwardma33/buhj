@@ -125,6 +125,7 @@ try {
 
   async function createAccount(page: Page, name: string) {
     await page.goto("/financial-accounts")
+    await page.getByRole("button", { name: "Add account" }).click()
     await page.getByLabel("Account name").fill(name)
     await page
       .getByLabel("Institution")
