@@ -554,6 +554,7 @@ try {
   await dashboard.goto(revisedPath)
   assert.equal(await dashboard.locator("main").innerText(), revised)
   await dashboard.goto("/income")
+  await dashboard.getByRole("button", { name: "Edit reported pay" }).click()
   assert.equal(
     await dashboard.getByLabel(/Take-home pay per paycheck/).inputValue(),
     "3000.00"
