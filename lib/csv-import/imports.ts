@@ -30,7 +30,7 @@ export async function findExistingImport(
   fingerprint: string
 ) {
   const [entry] = await db
-    .select({ id: csvImport.id })
+    .select({ id: csvImport.id, confirmedAt: csvImport.confirmedAt })
     .from(csvImport)
     .where(
       and(
@@ -39,7 +39,7 @@ export async function findExistingImport(
         or(isNotNull(csvImport.confirmedAt), active)
       )
     )
-  return entry?.id
+  return entry
 }
 
 export async function savePreview(entry: {
@@ -58,8 +58,8 @@ export async function savePreview(entry: {
       target: [csvImport.accountId, csvImport.fingerprint],
       set: { fingerprint: entry.fingerprint },
     })
-    .returning({ id: csvImport.id })
-  return saved.id
+    .returning({ id: csvImport.id, confirmedAt: csvImport.confirmedAt })
+  return saved
 }
 
 export function listCsvImports(accountId: string) {

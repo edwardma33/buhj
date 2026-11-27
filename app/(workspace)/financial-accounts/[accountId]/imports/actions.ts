@@ -18,6 +18,14 @@ import { proposeMapping } from "@/lib/csv-import/mapping"
 
 import { getFinancialAccount, validUuid } from "../../accounts"
 
+function uploadDestination(
+  accountPath: string,
+  { id, confirmedAt }: { id: string; confirmedAt: Date | null }
+) {
+  const importPath = `${accountPath}/imports/${id}`
+  return confirmedAt ? `${importPath}?notice=already-imported` : importPath
+}
+
 export async function uploadCsv(
   accountId: string,
   _previous: string,
@@ -36,7 +44,7 @@ export async function uploadCsv(
     .digest("hex")
   await deleteExpiredPreviews(account.id)
   const existing = await findExistingImport(account.id, fingerprint)
-  if (existing) redirect(`${accountPath}/imports/${existing}`)
+  if (existing) redirect(uploadDestination(accountPath, existing))
 
   const csv = parseCsv(bytes)
   if (!csv)
@@ -60,7 +68,7 @@ export async function uploadCsv(
   const columnName = (index: number) =>
     csv.headers[index].slice(0, 120) || `Column ${index + 1}`
 
-  const id = await savePreview({
+  const saved = await savePreview({
     accountId: account.id,
     fingerprint,
     filename:
@@ -81,7 +89,7 @@ export async function uploadCsv(
     },
   })
   revalidatePath(accountPath)
-  redirect(`${accountPath}/imports/${id}`)
+  redirect(uploadDestination(accountPath, saved))
 }
 
 export async function confirmImport(

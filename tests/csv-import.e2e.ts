@@ -280,10 +280,28 @@ try {
     null
   )
   await owner.goto(account)
-  await owner.getByText(/2 transactions imported/).waitFor()
-  await upload(owner, account, csv, "same-bytes.csv")
+  const history = owner.getByRole("region", { name: "Import history" })
+  const confirmedEntry = history.getByRole("link", {
+    name: /synthetic\.csv Imported 2 transactions/,
+  })
+  await confirmedEntry.click()
   await owner.waitForURL(origin + originalPreview)
   await owner.getByRole("heading", { name: "Confirmed import" }).waitFor()
+  assert.equal(
+    await owner.getByText(/This CSV was already imported/).count(),
+    0
+  )
+  await owner.getByRole("link", { name: "Back to Owned checking" }).click()
+  await owner.waitForURL(origin + account)
+  await confirmedEntry.waitFor()
+  await upload(owner, account, csv, "same-bytes.csv")
+  await owner.waitForURL(origin + originalPreview + "?notice=already-imported")
+  await owner.getByRole("heading", { name: "Confirmed import" }).waitFor()
+  await owner
+    .getByRole("status")
+    .getByText(/This CSV was already imported into this account/)
+    .waitFor()
+  assert.equal(await transactionCount(), 2)
   assert.equal(calls.length, 1)
 
   const separatePreview = await uploadPreview(owner, secondAccount, csv)
@@ -378,7 +396,15 @@ try {
     /private provider diagnostic|synthetic-csv-import-provider-key/
   )
   failProvider = false
-  await uploadPreview(guest, guestAccount, csv)
+  assert.equal(
+    await guest
+      .getByLabel("USD transaction CSV")
+      .evaluate((input: HTMLInputElement) => input.files?.[0]?.name),
+    "synthetic.csv"
+  )
+  await guest.getByRole("button", { name: "Preview import" }).click()
+  await guest.waitForURL(/\/imports\//)
+  await guest.getByRole("heading", { name: "Import preview" }).waitFor()
   assert.equal(calls.length, 7)
 
   await upload(guest, guestAccount, csv.replace("Coffee", "Water"))

@@ -1,3 +1,4 @@
+import { InfoIcon } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
@@ -83,6 +84,15 @@ export default async function ImportPage({
         </p>
       ) : (
         <>
+          {entry.confirmedAt && notice === "already-imported" && (
+            <Alert role="status">
+              <InfoIcon aria-hidden="true" />
+              <AlertDescription>
+                This CSV was already imported into this account. You’re viewing
+                the original import.
+              </AlertDescription>
+            </Alert>
+          )}
           <p className="wrap-break-word">{entry.filename}</p>
           {preview && (
             <section aria-label="Proposed column mapping" className="space-y-2">
